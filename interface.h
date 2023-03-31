@@ -33,7 +33,7 @@ typedef struct
 }SOFTWARE_VERSION_INFOR;
 
 enum{
-	DSP_HANDSHAKE_OK 		= 0x5a,
+	DSP_HANDSHAKE_OK 		= 0x55,
 	DSP_HANDSHAKE_WAIT		= 0xa5
 };/*DSP握手状态*/
 
@@ -70,7 +70,7 @@ enum{
 #define OFFSET_FPGA_BOOT_HOUR       	   	FPGA3_EMIF_ADDR(0x97)
 #define OFFSET_FPGA_BOOT_MINUTE       	   	FPGA3_EMIF_ADDR(0x98)
 #define OFFSET_FPGA_BOOT_SECOND       	  	FPGA3_EMIF_ADDR(0x99)
-#define OFFSET_BOOT_VERSION_STATUS       	FPGA3_EMIF_ADDR(0x9A)
+#define OFFSET_BOOT_VERSION_STATUS       	FPGA3_EMIF_ADDR(0x9C)
 
 void setSoftwareInfo(void);
 void softInfoToFpga(void);

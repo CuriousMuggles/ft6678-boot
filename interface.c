@@ -214,8 +214,8 @@ void softInfoToFpga(void)
 	fpga3_bram_Write8(address,Sw_version.SoftWare_Time_minute);
 	address = DSP_FPGA_BRAM_ADDR +OFFSET_FPGA_BOOT_SECOND;
 	fpga3_bram_Write8(address,Sw_version.SoftWare_Time_second);
-	address = DSP_FPGA_BRAM_ADDR +OFFSET_BOOT_VERSION_STATUS;
-	fpga3_bram_Write8(address,DSP_HANDSHAKE_OK);
+//	address = DSP_FPGA_BRAM_ADDR +OFFSET_BOOT_VERSION_STATUS;
+//	fpga3_bram_Write8(address,DSP_HANDSHAKE_OK);
 
 }
 /*****************************************************************/

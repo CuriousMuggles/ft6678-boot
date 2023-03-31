@@ -222,6 +222,8 @@ void Start_Boot()
 	unsigned int size,startaddr;
 	unsigned int *flash_ptr;
 	unsigned int loopCnt=0;
+	unsigned int address,blockNo;
+	unsigned char temp;
 
 //	unsigned int block_begin_num=0;
 //	Uint16 pFlashBlockNo =0;
@@ -302,15 +304,26 @@ void Start_Boot()
 
 		}
 
+#if 1
+		address = DSP_FPGA_BRAM_ADDR + OFFSET_DSP_RESET_REASON;
+		fpga3_bram_Read8(address,&temp);
 
-
-		//默认上电启动{非APP要求的复位重启操作}
-		UART_Print("switch DSP's flash to BLOCK 1 ....\r\n");
-		flashRet = dspFlashAddrSwitch(FLASH_AUTO_START_BLOCK);  //默认从flash分区1启动应用软件
-		if(flashRet >=0)  //切换FLASH地址块正确，切换到正确的地址
+		if(temp == APP_START_ERROR)/* 默认app启动失败，切换至备用app启动*/
 		{
-			  //UART_Print("successful\r\n");
-			//切换到第一片flash地址,用于加载FLASH内数据并启动APP
+			blockNo = 31;
+			UART_Print("switch DSP's flash to BLOCK 31 ....");
+		}
+		else/* 上电启动默认app */
+		{
+			blockNo = 1;
+			UART_Print("switch DSP's flash to BLOCK 1 ....");
+		}
+#endif
+		flashRet = dspFlashAddrSwitch(blockNo);  //默认从flash分区1启动应用软件
+		if(flashRet == blockNo)  //切换FLASH地址块正确，切换到正确的地址
+		{
+			UART_Print("successful\r\n");
+			//切换到目标flash地址,用于加载FLASH内数据并启动APP
 			flash_ptr=(unsigned int *)FLASH_STARTUP_ADDRS_USER; //都是从每个分区的0x000000*2=0MB，默认从0MB地址启动APP
 			for(i = 0;i < APP_FLASH_LEN;i+=4)
 			{
@@ -320,7 +333,7 @@ void Start_Boot()
 		else  //切换地址失败，不启动任何APP
 		{
 			flashAddrBlock =-1;
-			//UART_Print("switch DSP's flash failed,please check fpga3\r\n");
+			UART_Print("switch DSP's flash failed,please check fpga3\r\n");
 		}
 	}
 	else
@@ -577,6 +590,7 @@ int main(void)
 		if(ret == 0)
 		{
 			UART_Print("DDR3 test success\r\n");
+			fpga3_bram_Write8(DSP_FPGA_BRAM_ADDR +OFFSET_BOOT_VERSION_STATUS,DSP_HANDSHAKE_OK);
 		}
 		else
 		{
