@@ -280,4 +280,31 @@ int dspFlashAddrSwitch(unsigned int flashBlockNo)
 	
 	return BlockNo;
 }
+/*****************************************************************/
+/*函数：void getSlot(Uint8 *pslot_num,Uint8 *pdsp_num)
+ *功能：获取dsp芯片标识号和模块槽位号
+ *输入：pslot_num：存放模块槽位号的地址
+ *	  pdsp_num：存放芯片标识号的地址
+ *返回值：无
+ */
+void getSlot(Uint8 *pmark_num,Uint8 *pdsp_num)
+{
+	Uint8 tempFlag,mark;
+	Uint32 address;
 
+	/*等待FPGA3写入槽位和芯片号*/
+	address = DSP_FPGA_BRAM_ADDR +OFFSET_SLOT_FLAG_INFO;
+	fpga3_bram_Read8(address,&tempFlag);
+	while(tempFlag != 0xA5)
+	{
+		fpga3_bram_Read8(address,&tempFlag);
+	}
+
+	address = DSP_FPGA_BRAM_ADDR+OFFSET_SLOT_MARK;
+	fpga3_bram_Read8(address,&tempFlag);
+	*pmark_num = (tempFlag>16 ? 16:tempFlag);
+
+	address = DSP_FPGA_BRAM_ADDR+OFFSET_DEVICE_ID;
+	fpga3_bram_Read8(address,&tempFlag);
+	*pdsp_num = tempFlag&3;
+}

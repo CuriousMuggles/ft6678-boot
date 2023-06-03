@@ -1,7 +1,7 @@
 #ifndef _INTERFACE_H_
 #define _INTERFACE_H_
 
-#define DSP_BOOT_VERSION	"02.01.52"
+#define DSP_BOOT_VERSION	"02.01.53"
 
 typedef struct
 {
@@ -53,6 +53,9 @@ enum{
 #define EMIF_BRAM_ADDR_SIZE              	(0x200*EMIF_BRAM_ONEDATA_SIZE)
 #define FPGA3_EMIF_ADDR(x)					((x)*EMIF_BRAM_ONEDATA_SIZE+EMIF_BRAM_ONEDATA_OFFSET)
 
+#define OFFSET_SLOT_MARK					FPGA3_EMIF_ADDR(0x0)/*模块槽位*/
+#define OFFSET_DEVICE_ID            		FPGA3_EMIF_ADDR(0x1)/*dsp芯片标识*/
+#define OFFSET_SLOT_FLAG_INFO      			FPGA3_EMIF_ADDR(0x9)/*0xa5=模块及标识有效*/
 #define OFFSET_DSP_FLASH_SWITCH_RES         FPGA3_EMIF_ADDR(0x13)/*1=DSP FLASH切换完成*/
 #define OFFSET_DSP_FLASH_ADDR  				FPGA3_EMIF_ADDR(0x22)/*当前DSP FLASH地址*/
 #define OFFSET_DSP_RESET_REASON  			FPGA3_EMIF_ADDR(0x24)/*DSP复位原因*/

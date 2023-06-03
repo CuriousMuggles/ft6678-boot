@@ -51,6 +51,8 @@ extern _c_int00(void);
 #define FLASH_STARTUP_ADDRS_USER 0x70000000
 #define APP_FLASH_LEN 0x300000
 
+unsigned char g_dsp_num;			/*dsp芯片标识号*/
+unsigned char g_mark_num;			/*模块槽位号*/
 
 void delay_boot_ms(unsigned int N_ms)
 {
@@ -195,13 +197,18 @@ unsigned int SrioClkClose(unsigned int SrioInstance){
 
 void usr_dev_init()
 {
-	SrioClkClose(0);
-	SrioClkClose(1);
+	char ch[20];
 	PSC_Open_Clk("EMIF32");
 	EMIF_init();
 	S29GL64S_ID();
 	UART_Config(BaudRate_Value);
 	UART_Print("Uart config done\r\n");
+
+	/*获取芯片标识和槽位*/
+	UART_Print("Get DSP slot ...");
+	getSlot(&g_mark_num,&g_dsp_num);
+	sprintf(ch,"done dsp %d,mark %d\r\n",g_dsp_num,g_mark_num);
+	UART_Print(ch);
 
 	/*引导APP之前，先上报BOOT的版本和编译时间*/
 	setSoftwareInfo();
@@ -558,6 +565,8 @@ int main(void)
 		CACHE_setL1DSize(CACHE_L1_0KCACHE);
 		CACHE_setL2Size(CACHE_0KCACHE);
 		MainPLL(40,1,1,1);      //FOUTPOSTDIV=1GHz
+		PSC_Close_Clk("SRIO0");
+		PSC_Close_Clk("SRIO1");
 		for(jjj=0;jjj<50000000;jjj++);
 		CSL_tscEnable();
 		usr_dev_init();

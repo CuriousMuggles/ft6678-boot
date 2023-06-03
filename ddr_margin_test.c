@@ -15,7 +15,7 @@
 #include "ddr_regdefine.h"
 #include "ddr_margin_data.h"
 unsigned int right_data1 = 0x0;
-
+extern unsigned char g_dsp_num;;
 /*
  * function:
  * input   :
@@ -568,7 +568,7 @@ void fill_cmp() {
 
 void margin_usr()
 {
-	memcpy((int*)0x0c300000, ddr_margin_data, 0xa00);
+	memcpy((int*)0x0c300000, ddr_margin_data[g_dsp_num], 0xa00);
 	fill_right_value1();
 	fill_right_value2();
 	fill_right_value3();
