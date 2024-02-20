@@ -1,7 +1,7 @@
 #ifndef _INTERFACE_H_
 #define _INTERFACE_H_
 
-#define DSP_BOOT_VERSION	"02.01.53"
+#define DSP_BOOT_VERSION	"02.00.00"
 
 typedef struct
 {

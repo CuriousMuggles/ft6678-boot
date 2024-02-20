@@ -205,15 +205,15 @@ void usr_dev_init()
 	UART_Print("Uart config done\r\n");
 
 	/*获取芯片标识和槽位*/
-	UART_Print("Get DSP slot ...");
-	getSlot(&g_mark_num,&g_dsp_num);
-	sprintf(ch,"done dsp %d,mark %d\r\n",g_dsp_num,g_mark_num);
-	UART_Print(ch);
-
-	/*引导APP之前，先上报BOOT的版本和编译时间*/
-	setSoftwareInfo();
-	softInfoToFpga();
-	UART_Print("Version upload done\r\n");
+//	UART_Print("Get DSP slot ...");
+//	getSlot(&g_mark_num,&g_dsp_num);
+//	sprintf(ch,"done dsp %d,mark %d\r\n",g_dsp_num,g_mark_num);
+//	UART_Print(ch);
+//
+//	/*引导APP之前，先上报BOOT的版本和编译时间*/
+//	setSoftwareInfo();
+//	softInfoToFpga();
+//	UART_Print("Version upload done\r\n");
 
 }
 
@@ -570,7 +570,9 @@ int main(void)
 		for(jjj=0;jjj<50000000;jjj++);
 		CSL_tscEnable();
 		usr_dev_init();
+		bspSpiTest();
 		delay_boot_ms(3000);
+
 
 		/*
 		 * @param1: input DDR CLK,         option: DDR_CLK_800MHZ,DDR_CLK_667MHZ, DDR_CLK_400MHZ
@@ -599,7 +601,7 @@ int main(void)
 		if(ret == 0)
 		{
 			UART_Print("DDR3 test success\r\n");
-			fpga3_bram_Write8(DSP_FPGA_BRAM_ADDR +OFFSET_BOOT_VERSION_STATUS,DSP_HANDSHAKE_OK);
+//			fpga3_bram_Write8(DSP_FPGA_BRAM_ADDR +OFFSET_BOOT_VERSION_STATUS,DSP_HANDSHAKE_OK);
 		}
 		else
 		{
@@ -622,7 +624,7 @@ int main(void)
 			printf("mpax test 2 ret : 0x%x\n",ret);
 */
 
-		Start_Boot();
+//		Start_Boot();
 
 		*(unsigned int*)0xc300000 = 0x12345678;
 	}
@@ -641,7 +643,7 @@ int main(void)
 		printf("mpax test 2 ret : 0x%x\n",ret_mpax);
 */
 
-		Start_Boot();
+//		Start_Boot();
 	}
 	while(1);
 
