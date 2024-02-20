@@ -46,6 +46,7 @@ typedef struct{
 /********************************************************************************
 	º¯ÊýÉùÃ÷
 ********************************************************************************/
-INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT8 *rdData,UINT32 wrLen);
+//INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT8 *rdData,UINT32 wrLen);
+INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT32 wrLen,UINT8 *rdData,UINT32 rdLen);
 INT32 bspSpiInit(UINT32 dev);
 #endif

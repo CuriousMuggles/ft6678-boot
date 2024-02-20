@@ -145,37 +145,46 @@ static void spiClearRecvFifo(UINT32 dev)
         RET_RARAM5_ERROR：读取数据存放地址为空
 约束条件：无
 *****************************************************************************/
-INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT8 *rdData,UINT32 wrLen)
+INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT32 wrLen,UINT8 *rdData,UINT32 rdLen)
 {
     UINT32 i,monitor,temp=0;
 
 //    PARAMETER_ASSERT((wrData != NULL),RET_RARAM3_ERROR);
 //    PARAMETER_ASSERT(((wrLen + rdLen) <= SPI_FIFO_DEPTH),RET_RARAM4_ERROR);
 //    PARAMETER_ASSERT((rdData != NULL),RET_RARAM5_ERROR);
-
-    spiClearRecvFifo(dev);
+    /*第一次请求指令*/
     spiSlaveSelectEnable(dev,cs);
     
     for(i = 0 ; i < wrLen; i++){
 		if(gSpiDevModeConfig[dev].rev){
-			temp = *(wrData+i) << 24;
+			SPI_TRANSMIT = *(wrData+i) << 24;
 		}
 		else{
-			temp = *(wrData+i);
+			SPI_TRANSMIT = *(wrData+i);
 		}
-		SPI_TRANSMIT = temp;
 //            SPIDBG("write %d/%d:0x%x\n",i,wrLen,*(wrData+i));
     }
     waitSpiSendComplete(dev);
     spiSlaveSelectDisable(dev);
 
-    for(i = 0 ; i < wrLen; i++){
-		temp = SPI_RECEIVE;
+    delay_boot_ms(1);
+
+    /*第二次读取指令*/
+    spiClearRecvFifo(dev);
+    spiSlaveSelectEnable(dev,cs);
+
+	for(i = 0 ; i < rdLen+1; i++){/*第一个字节会重复，所以多发一个时钟*/
+		SPI_TRANSMIT = 0;
+	}
+	waitSpiSendComplete(dev);
+
+	temp = SPI_RECEIVE;/*先读一个重复的字节*/
+    for(i = 0 ; i < rdLen; i++){
 		if(gSpiDevModeConfig[dev].rev){
-			*(rdData + i) = temp >> 16 & 0xff;
+			*(rdData + i) = SPI_RECEIVE >> 16 & 0xff;
 		}
 		else{
-			*(rdData + i) = temp >> 8 & 0xff;
+			*(rdData + i) = SPI_RECEIVE >> 8 & 0xff;
 		}
     }
 
@@ -206,14 +215,10 @@ void bspSpiTest(void)
 	while(1){
 		sendbuf[0] = 0xa5;
 		sendbuf[1] = 1;
-		sendbuf[2] = i++;
+		sendbuf[2] = ++i;
 		sendbuf[3] = 0xff;
 		memset(recvbuf,0,sizeof(recvbuf));
-		spiTransfer(0,0,sendbuf,recvbuf,4);
-		delay_boot_ms(1);
-		sendbuf[0] = 0xFF;
-		memset(recvbuf,0,sizeof(recvbuf));
-		spiTransfer(0,0,sendbuf,recvbuf,4);
+		spiTransfer(0,0,sendbuf,4,recvbuf,3);
 	}
 
 }
