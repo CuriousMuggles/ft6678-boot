@@ -198,22 +198,25 @@ unsigned int SrioClkClose(unsigned int SrioInstance){
 void usr_dev_init()
 {
 	char ch[20];
+
+	bspSpiInit(0);
+	/*获取芯片标识和槽位*/
+	UART_Config(BaudRate_Value);
+	UART_Print("Uart config done\r\n");
+	UART_Print("Get DSP slot ...");
+	getSlot(&g_mark_num,&g_dsp_num);
+	sprintf(ch,"done dsp %d,mark %d\r\n",g_dsp_num+1,g_mark_num);
+	UART_Print(ch);
+
 	PSC_Open_Clk("EMIF32");
 	EMIF_init();
 	S29GL64S_ID();
-	UART_Config(BaudRate_Value);
-	UART_Print("Uart config done\r\n");
 
-	/*获取芯片标识和槽位*/
-//	UART_Print("Get DSP slot ...");
-//	getSlot(&g_mark_num,&g_dsp_num);
-//	sprintf(ch,"done dsp %d,mark %d\r\n",g_dsp_num,g_mark_num);
-//	UART_Print(ch);
-//
-//	/*引导APP之前，先上报BOOT的版本和编译时间*/
-//	setSoftwareInfo();
-//	softInfoToFpga();
-//	UART_Print("Version upload done\r\n");
+
+	/*引导APP之前，先上报BOOT的版本和编译时间*/
+	setSoftwareInfo();
+	softInfoToFpga();
+	UART_Print("Version upload done\r\n");
 
 }
 
@@ -236,50 +239,12 @@ void Start_Boot()
 //	Uint16 pFlashBlockNo =0;
 	void  (*exit)();
 
-	/*
-	switch(DNUM)
-	{
-		case 0:
-			UART_Print("--------CORE-0 Boot start--------\r\n");
-			break;
-		case 1:
-			UART_Print("--------CORE-1 Boot start--------\r\n");
-			break;
-		case 2:
-			UART_Print("--------CORE-2 Boot start--------\r\n");
-			break;
-		case 3:
-			UART_Print("--------CORE-3 Boot start--------\r\n");
-			break;
-		case 4:
-			UART_Print("--------CORE-4 Boot start--------\r\n");
-			break;
-		case 5:
-			UART_Print("--------CORE-5 Boot start--------\r\n");
-			break;
-		case 6:
-			UART_Print("--------CORE-6 Boot start--------\r\n");
-			break;
-		case 7:
-			UART_Print("--------CORE-7 Boot start--------\r\n");
-			break;
-		default:
-			break;
-	}*/
-
 	/*核0 的时候处理措施*/
 	if(DNUM == 0)
 	{
 		//核0将boot搬运到每个从核的boot运行段
 		int i_move = 1;
-	/*	int j_move = 0;
-		for(i_move = 1;i_move < 8;i_move++)
-		{
-			for(j_move = 0;j_move < 0x20000;j_move += 4)
-			{
-				*(unsigned int*)(0x10000000 + i_move*0x1000000 + 0x800000 + j_move) = *(unsigned int*)(0x70000000 + j_move);
-			}
-		}*/
+
 		dspFlashAddrSwitch(0);
 		for(i_move = 1;i_move<8;i_move++)
 		{
@@ -312,10 +277,8 @@ void Start_Boot()
 		}
 
 #if 1
-		address = DSP_FPGA_BRAM_ADDR + OFFSET_DSP_RESET_REASON;
-		fpga3_bram_Read8(address,&temp);
-
-		if(temp == APP_START_ERROR)/* 默认app启动失败，切换至备用app启动*/
+		temp = getBootMode();
+		if(temp == BOOT_BACKUP)/* 默认app启动失败，切换至备用app启动*/
 		{
 			blockNo = 31;
 			UART_Print("switch DSP's flash to BLOCK 31 ....");
@@ -570,9 +533,7 @@ int main(void)
 		for(jjj=0;jjj<50000000;jjj++);
 		CSL_tscEnable();
 		usr_dev_init();
-		bspSpiTest();
 		delay_boot_ms(3000);
-
 
 		/*
 		 * @param1: input DDR CLK,         option: DDR_CLK_800MHZ,DDR_CLK_667MHZ, DDR_CLK_400MHZ
@@ -597,11 +558,9 @@ int main(void)
 		//DSP_memory_test(0x80000000, 0xFFFFFFFF, 1, "DDR3");
 		UART_Print("DDR3 test begin\r\n");
 		ret = ddr3_memory_test();
-//		printf("\Test ret is %d!\n",ret);
 		if(ret == 0)
 		{
 			UART_Print("DDR3 test success\r\n");
-//			fpga3_bram_Write8(DSP_FPGA_BRAM_ADDR +OFFSET_BOOT_VERSION_STATUS,DSP_HANDSHAKE_OK);
 		}
 		else
 		{
@@ -624,7 +583,7 @@ int main(void)
 			printf("mpax test 2 ret : 0x%x\n",ret);
 */
 
-//		Start_Boot();
+		Start_Boot();
 
 		*(unsigned int*)0xc300000 = 0x12345678;
 	}
@@ -643,7 +602,7 @@ int main(void)
 		printf("mpax test 2 ret : 0x%x\n",ret_mpax);
 */
 
-//		Start_Boot();
+		Start_Boot();
 	}
 	while(1);
 

@@ -3,6 +3,43 @@
 
 #define DSP_BOOT_VERSION	"02.00.00"
 
+#define char2BCD(x)			(((x/10)<<4) | (x%10))
+#define SYNC_MOSI			(0xa5)
+#define SYNC_MISO			(0x5a)
+#define FRAME_MAXLENGTH		(16)
+#define FRAME_HEAD_LENGTH	(3)
+
+typedef struct{
+	unsigned char sync;
+	unsigned char msglength;
+	unsigned char msgtype;
+	unsigned char msgdata[FRAME_MAXLENGTH-3];
+}SPI_ICD;/*ICD帧格式*/
+
+typedef enum{
+	DSP_STATUS,
+	FPGA1_STATUS,
+	FPGA2_STATUS,
+	BOOT_VERSION,
+	DSP_VERSION,
+	FPGA1_VERSION,
+	FPGA2_VERSION,
+	DSP_FLASH_SET,
+	DSP_FLASH_GET,
+	FPGA1_FLASH_SET,
+	FPGA1_FLASH_GET,
+	FPGA2_FLASH_SET,
+	FPGA2_FLASH_GET,
+	MARK_SLOT_GET,
+	EXTERNAL_TIME,
+	BOOT_MODE,
+	FPGA1_RELOAD,
+	FPGA2_RELOAD,
+	FPGA1_LOADSTATUS_GET,
+	FPGA2_LOADSTATUS_GET,
+	TYPE_MAX_NUM
+}ICD_TYPE;
+
 typedef struct
 {
 	int CodeInfo;/*软件程序代码编号*/
@@ -32,50 +69,14 @@ typedef struct
 	unsigned char SoftWare_Time_second; /*BYTE10:软件构件版本-编译时间-秒-10_BCD码+BCD码*/
 }SOFTWARE_VERSION_INFOR;
 
-enum{
-	DSP_HANDSHAKE_OK 		= 0x55,
-	DSP_HANDSHAKE_WAIT		= 0xa5
-};/*DSP握手状态*/
 
 enum{
-	BOOT_START_ERROR	= 0x11,
-	APP_START_ERROR		= 0x22,
-	START_SUCCESS		= 0x33
+	BOOT_NORMAL	= 0x11,
+	BOOT_BACKUP	= 0x22,
 };/*DSP复位原因*/
-/******************************emif_interface(FPGA3) ----SHARE ROM for communication**************************************/
-/****************************0x7C000000~0x7C007FFF**************************************/
-#define DSP_FPGA_bram_BASE_ADDR				(0x7c000000)
-#define EMIF_BRAM_ADDR_OFFSET             	(0x0000)
-#define DSP_FPGA_BRAM_ADDR                	(DSP_FPGA_bram_BASE_ADDR+EMIF_BRAM_ADDR_OFFSET)
-#define EMIF_BRAM_ONEDATA_SIZE            	(0x1)
-#define EMIF_BRAM_ONEDATA_OFFSET          	(0x0)
-#define EMIF_BRAM_BIT_OFFSET             	(16)  
-#define EMIF_BRAM_ADDR_SIZE              	(0x200*EMIF_BRAM_ONEDATA_SIZE)
-#define FPGA3_EMIF_ADDR(x)					((x)*EMIF_BRAM_ONEDATA_SIZE+EMIF_BRAM_ONEDATA_OFFSET)
-
-#define OFFSET_SLOT_MARK					FPGA3_EMIF_ADDR(0x0)/*模块槽位*/
-#define OFFSET_DEVICE_ID            		FPGA3_EMIF_ADDR(0x1)/*dsp芯片标识*/
-#define OFFSET_SLOT_FLAG_INFO      			FPGA3_EMIF_ADDR(0x9)/*0xa5=模块及标识有效*/
-#define OFFSET_DSP_FLASH_SWITCH_RES         FPGA3_EMIF_ADDR(0x13)/*1=DSP FLASH切换完成*/
-#define OFFSET_DSP_FLASH_ADDR  				FPGA3_EMIF_ADDR(0x22)/*当前DSP FLASH地址*/
-#define OFFSET_DSP_RESET_REASON  			FPGA3_EMIF_ADDR(0x24)/*DSP复位原因*/
-#define OFFSET_DSP_FLASH_SWITCH_CMD         FPGA3_EMIF_ADDR(0x30)/*1=开始切换DSP FLASH地址*/
-#define OFFSET_DSP_FLASH_SWITCH_ADDR        FPGA3_EMIF_ADDR(0x31)/*DSP FLASH要切换的地址，0~31*/
-
-/*上报BOOT版本号给FPGA3*/
-#define OFFSET_FPGA_BOOT_VERSION_XX     	FPGA3_EMIF_ADDR(0x90)
-#define OFFSET_FPGA_BOOT_VERSION_YY     	FPGA3_EMIF_ADDR(0x91)
-#define OFFSET_FPGA_BOOT_VERSION_ZZ     	FPGA3_EMIF_ADDR(0x92)
-#define OFFSET_FPGA_BOOT_YEAR_H       		FPGA3_EMIF_ADDR(0x93)
-#define OFFSET_FPGA_BOOT_YEAR_L       		FPGA3_EMIF_ADDR(0x94)
-#define OFFSET_FPGA_BOOT_MONTH       		FPGA3_EMIF_ADDR(0x95)
-#define OFFSET_FPGA_BOOT_DAY       			FPGA3_EMIF_ADDR(0x96)
-#define OFFSET_FPGA_BOOT_HOUR       	   	FPGA3_EMIF_ADDR(0x97)
-#define OFFSET_FPGA_BOOT_MINUTE       	   	FPGA3_EMIF_ADDR(0x98)
-#define OFFSET_FPGA_BOOT_SECOND       	  	FPGA3_EMIF_ADDR(0x99)
-#define OFFSET_BOOT_VERSION_STATUS       	FPGA3_EMIF_ADDR(0x9C)
 
 void setSoftwareInfo(void);
 void softInfoToFpga(void);
 int dspFlashAddrSwitch(unsigned int flashBlockNo);
+int getBootMode(void);
 #endif/*_INTERFACE_H_*/

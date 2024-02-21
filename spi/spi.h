@@ -35,18 +35,18 @@
 	结构体定义
 ********************************************************************************/
 typedef struct{
-	UINT8 loop;		/*回环模式，0-正常模式，1-回环模式*/
-	UINT8 cpol;		/*时钟极性，0-空闲低电平，1-空闲高电平*/
-	UINT8 cpha;		/*时钟相位，0-第一个跳变沿读数，1-第一个跳变沿改数*/
-	UINT8 rev;		/*数据传输方式，0-最低位优先传输，1-最高位优先传输*/
-	UINT8 ms;		/*主从配置，0-从，1-主*/
-	UINT8 len;		/*传输字长*/
+	unsigned char loop;		/*回环模式，0-正常模式，1-回环模式*/
+	unsigned char cpol;		/*时钟极性，0-空闲低电平，1-空闲高电平*/
+	unsigned char cpha;		/*时钟相位，0-第一个跳变沿读数，1-第一个跳变沿改数*/
+	unsigned char rev;		/*数据传输方式，0-最低位优先传输，1-最高位优先传输*/
+	unsigned char ms;		/*主从配置，0-从，1-主*/
+	unsigned char len;		/*传输字长*/
 }SPI_MODE_CONFIG;
 
 /********************************************************************************
 	函数声明
 ********************************************************************************/
 //INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT8 *rdData,UINT32 wrLen);
-INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT32 wrLen,UINT8 *rdData,UINT32 rdLen);
-INT32 bspSpiInit(UINT32 dev);
+int spiTransfer(unsigned int dev,unsigned int cs,unsigned char *wrData,unsigned int wrLen,unsigned char *rdData,unsigned int rdLen);
+int bspSpiInit(unsigned int dev);
 #endif

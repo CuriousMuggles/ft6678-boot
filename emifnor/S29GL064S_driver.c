@@ -2,7 +2,7 @@
 #include <string.h>
 #include "S29GL064S_driver.h"
 
-
+extern unsigned char g_dsp_num;
 /************************EMIF 寄存器**********************************************************/
 #define RCSR	     *(unsigned int*)0x20C00000   //版本代码和状态寄存器
 #define AWCCR	 *(unsigned int*)0x20C00004   //异步等待周期配置寄存器
@@ -27,7 +27,9 @@ void EMIF_init()
 	A1CR=0xBFFFFFFD;       //CE0配置为16位nor flash
 	A2CR=0xBFFFFFFD;       //CE1配置为8位nor flash
 	A3CR=0xBFFFFFFC;       //CE2配置为8位nor flash
-	A4CR=0xBFFFFFFC;       //CE3配置为8位nor flash
+	if(g_dsp_num == 2){/*只有DSP3有CS3*/
+		A4CR=0xBFFFFFFC;       //CE3配置为8位nor flash
+	}
 }
 
 void delay(int i)

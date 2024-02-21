@@ -214,11 +214,13 @@ void bspSpiTest(void)
 
 	while(1){
 		sendbuf[0] = 0xa5;
-		sendbuf[1] = 1;
-		sendbuf[2] = ++i;
-		sendbuf[3] = 0xff;
+		sendbuf[1] = 3;
+		sendbuf[2] = 0;
+		sendbuf[3] = 1;
+		sendbuf[4] = 1;
+		sendbuf[5] = 1;
 		memset(recvbuf,0,sizeof(recvbuf));
-		spiTransfer(0,0,sendbuf,4,recvbuf,3);
+		spiTransfer(0,0,sendbuf,sendbuf[1]+3,recvbuf,3);
 	}
 
 }
