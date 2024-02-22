@@ -158,7 +158,7 @@ void setSoftwareInfo(void)
  */
 void softInfoToFpga(void)
 {
-	SPI_ICD framewrite,frameread;
+	SPI_ICD framewrite={0},frameread={0};
 	int readlength = 0;
 
 	framewrite.sync = SYNC_MOSI;
@@ -188,7 +188,7 @@ void softInfoToFpga(void)
  */
 int dspFlashAddrSwitch(unsigned int flashBlockNo)
 {
-	SPI_ICD framewrite,frameread;
+	SPI_ICD framewrite={0},frameread={0};
 	int readlength = 0;
 
 	if(flashBlockNo>31){
@@ -226,7 +226,7 @@ int dspFlashAddrSwitch(unsigned int flashBlockNo)
  */
 void getSlot(Uint8 *pmark_num,Uint8 *pdsp_num)
 {
-	SPI_ICD framewrite,frameread;
+	SPI_ICD framewrite={0},frameread={0};
 	int readlength = 2;
 
 	framewrite.sync = SYNC_MOSI;
@@ -249,7 +249,7 @@ void getSlot(Uint8 *pmark_num,Uint8 *pdsp_num)
  */
 int getBootMode(void)
 {
-	SPI_ICD framewrite,frameread;
+	SPI_ICD framewrite={0},frameread={0};
 	int readlength = 1;
 
 	framewrite.sync = SYNC_MOSI;

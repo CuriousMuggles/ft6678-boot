@@ -12,8 +12,8 @@
  *
  *============================================================================
  */
-#include "ddr_regdefine.h"
-#include "CORE_Memory_Test.h"
+#include "ddr/ddr_regdefine.h"
+#include "ddr/CORE_Memory_Test.h"
 #include "S29GL064S_driver.h"
 #include "interface.h"
 #include <c6x.h>

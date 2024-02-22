@@ -177,6 +177,7 @@ INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT32 wrLen,UINT8 *rdData,
 		SPI_TRANSMIT = 0;
 	}
 	waitSpiSendComplete(dev);
+	spiSlaveSelectDisable(dev);
 
 	temp = SPI_RECEIVE;/*先读一个重复的字节*/
     for(i = 0 ; i < rdLen; i++){
