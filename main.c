@@ -278,7 +278,7 @@ void Start_Boot()
 
 #if 1
 		temp = getBootMode();
-		if(temp == BOOT_BACKUP)/* 默认app启动失败，切换至备用app启动*/
+		if(temp == BACKUP_OR_FAIL)/* 默认app启动失败，切换至备用app启动*/
 		{
 			blockNo = 31;
 			UART_Print("switch DSP's flash to BLOCK 31 ....");

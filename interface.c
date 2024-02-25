@@ -89,24 +89,7 @@ int getDrvVersion(version_drv * version)
 
 	return 0;
 }
-static int spiHeadCheck(unsigned int type,SPI_ICD *readbuf)
-{
-	char ch[20];
 
-	if(!readbuf){
-		return ;
-	}
-
-	if((readbuf->sync == SYNC_MISO) && (readbuf->msgtype == type)){
-		return 0;
-	}
-	else{
-		UART_Print("spi transfer fail,");
-		sprintf(ch,"msg type is %d\r\n",type);
-		UART_Print(ch);
-		return 1;
-	}
-}
 /*****************************************************************/
 /*函数：void setSoftwareInfo(void)
  *功能：获取软件版本
@@ -124,28 +107,28 @@ void setSoftwareInfo(void)
 	Sw_version.SoftWare_CodeInfo =DspVersion.CodeInfo;
 
 
-	data1 = char2BCD((DspVersion.versionH)&0xff);
+	data1 = CHAR2BCD((DspVersion.versionH)&0xff);
 	Sw_version.SoftWare_VersionH =data1;
-	data1 = char2BCD((DspVersion.versionM)&0xff);
+	data1 = CHAR2BCD((DspVersion.versionM)&0xff);
 	Sw_version.SoftWare_VersionM =data1;
-	data1 = char2BCD(DspVersion.versionL&0xff);
+	data1 = CHAR2BCD(DspVersion.versionL&0xff);
 	Sw_version.SoftWare_VersionL =data1;
 
-	data1 = char2BCD((DspVersion.year/100)&0xff);
+	data1 = CHAR2BCD((DspVersion.year/100)&0xff);
 	Sw_version.SoftWare_Date_yearH =data1;
-	data1 = char2BCD((DspVersion.year%100)&0xff);
+	data1 = CHAR2BCD((DspVersion.year%100)&0xff);
 	Sw_version.SoftWare_Date_yearL =data1;
 
-	data1 = char2BCD((DspVersion.month)&0xff);
+	data1 = CHAR2BCD((DspVersion.month)&0xff);
 	Sw_version.SoftWare_Date_month =data1;
-	data1 = char2BCD((DspVersion.day)&0xff);
+	data1 = CHAR2BCD((DspVersion.day)&0xff);
 	Sw_version.SoftWare_Date_day =data1;
 
-	data1 = char2BCD((DspVersion.hour)&0xff);
+	data1 = CHAR2BCD((DspVersion.hour)&0xff);
 	Sw_version.SoftWare_Time_hour =data1;
-	data1 = char2BCD((DspVersion.minute)&0xff);
+	data1 = CHAR2BCD((DspVersion.minute)&0xff);
 	Sw_version.SoftWare_Time_minute =data1;
-	data1 = char2BCD((DspVersion.second)&0xff);
+	data1 = CHAR2BCD((DspVersion.second)&0xff);
 	Sw_version.SoftWare_Time_second =data1;
 
 	return;
@@ -158,25 +141,30 @@ void setSoftwareInfo(void)
  */
 void softInfoToFpga(void)
 {
-	SPI_ICD framewrite={0},frameread={0};
-	int readlength = 0;
+	unsigned char datawrite[FRAME_MAX_LENGTH]={0},dataread[FRAME_MAX_LENGTH-6]={0};
+	unsigned int regAddr,temp;
+	unsigned int payloadlength = 12;
 
-	framewrite.sync = SYNC_MOSI;
-	framewrite.msglength = 10;
-	framewrite.msgtype = BOOT_VERSION;
-	framewrite.msgdata[0] = DspVersion.versionH;
-	framewrite.msgdata[1] = DspVersion.versionM;
-	framewrite.msgdata[2] = DspVersion.versionL;
-	framewrite.msgdata[3] = DspVersion.year/100;
-	framewrite.msgdata[4] = DspVersion.year%100;
-	framewrite.msgdata[5] = DspVersion.month;
-	framewrite.msgdata[6] = DspVersion.day;
-	framewrite.msgdata[7] = DspVersion.hour;
-	framewrite.msgdata[8] = DspVersion.minute;
-	framewrite.msgdata[9] = DspVersion.second;
-
-	spiTransfer(0,0,(Uint8*)&framewrite,framewrite.msglength + FRAME_HEAD_LENGTH,(Uint8*)&frameread,readlength + FRAME_HEAD_LENGTH);
-	spiHeadCheck(framewrite.msgtype,&frameread);
+	regAddr = SPI_FRAME_REG_ADDR(SPI_BOOT_VERSION1_SET);
+	datawrite[0] = SPI_FRAME_CMD_WRITE;
+	datawrite[1] = regAddr>>24&0xff;
+	datawrite[2] = regAddr>>16&0xff;
+	datawrite[3] = regAddr>>8&0xff;
+	datawrite[4] = regAddr&0xff;
+	datawrite[5] = payloadlength-1;
+	datawrite[6] = Sw_version.SoftWare_Date_yearH;
+	datawrite[7] = Sw_version.SoftWare_VersionL;
+	datawrite[8] = Sw_version.SoftWare_VersionM;
+	datawrite[9] = Sw_version.SoftWare_VersionH;
+	datawrite[10] = Sw_version.SoftWare_Time_hour;
+	datawrite[11] = Sw_version.SoftWare_Date_day;
+	datawrite[12] = Sw_version.SoftWare_Date_month;
+	datawrite[13] = Sw_version.SoftWare_Date_yearL;
+	datawrite[14] = SYNC_MOSI;
+	datawrite[15] = 0;
+	datawrite[16] = Sw_version.SoftWare_Time_second;
+	datawrite[17] = Sw_version.SoftWare_Time_minute;
+	spiTransfer(0,0,datawrite,payloadlength+6,dataread,0);
 }
 /*****************************************************************/
 /*函数：int dspFlashAddrSwitch(unsigned int flashBlockNo)
@@ -188,34 +176,46 @@ void softInfoToFpga(void)
  */
 int dspFlashAddrSwitch(unsigned int flashBlockNo)
 {
-	SPI_ICD framewrite={0},frameread={0};
-	int readlength = 0;
+	unsigned char datawrite[FRAME_MAX_LENGTH]={0},dataread[FRAME_MAX_LENGTH-6]={0};
+	unsigned int regAddr,temp;
+	unsigned int payloadlength;
+	int loopcnt = 10;
 
 	if(flashBlockNo>31){
 		return -1;
 	}
 
-	framewrite.sync = SYNC_MOSI;
-	framewrite.msglength = 1;
-	framewrite.msgtype = DSP_FLASH_SET;
-	framewrite.msgdata[0] = flashBlockNo;
+	regAddr = SPI_FRAME_REG_ADDR(SPI_DSP_FLASH_SET);
+	payloadlength = 4;
+	datawrite[0] = SPI_FRAME_CMD_WRITE;
+	datawrite[1] = regAddr>>24&0xff;
+	datawrite[2] = regAddr>>16&0xff;
+	datawrite[3] = regAddr>>8&0xff;
+	datawrite[4] = regAddr&0xff;
+	datawrite[5] = payloadlength-1;
+	datawrite[6] = SYNC_MOSI;
+	datawrite[7] = 0;
+	datawrite[8] = 0;
+	datawrite[9] = flashBlockNo & 0x1f;
 
-	spiTransfer(0,0,(Uint8*)&framewrite,framewrite.msglength + FRAME_HEAD_LENGTH,(Uint8*)&frameread,readlength + FRAME_HEAD_LENGTH);
-	if(spiHeadCheck(framewrite.msgtype,&frameread) != 0){
-		return -2;
+	delay_boot_ms(1);
+
+	regAddr = SPI_FRAME_REG_ADDR(SPI_DSP_FLASH_GET);
+	payloadlength = 4;
+	datawrite[0] = SPI_FRAME_CMD_READ;
+	datawrite[1] = regAddr>>24&0xff;
+	datawrite[2] = regAddr>>16&0xff;
+	datawrite[3] = regAddr>>8&0xff;
+	datawrite[4] = regAddr&0xff;
+	datawrite[5] = payloadlength-1;
+	while(loopcnt--){
+		spiTransfer(0,0,datawrite,6,dataread,payloadlength);
+		if(dataread[0] == SYNC_MISO && dataread[3] == flashBlockNo){
+			return flashBlockNo;
+		}
+		ddr_pll_delay(1000);
 	}
-
-	ddr_pll_delay(1000);
-
-	readlength = 1;
-	framewrite.sync = SYNC_MOSI;
-	framewrite.msglength = 0;
-	framewrite.msgtype = DSP_FLASH_GET;
-	spiTransfer(0,0,(Uint8*)&framewrite,framewrite.msglength + FRAME_HEAD_LENGTH,(Uint8*)&frameread,readlength + FRAME_HEAD_LENGTH);
-	if(spiHeadCheck(framewrite.msgtype,&frameread) != 0){
-		return -2;
-	}
-	return frameread.msgdata[0];
+	return -2;
 }
 /*****************************************************************/
 /*函数：void getSlot(Uint8 *pslot_num,Uint8 *pdsp_num)
@@ -226,18 +226,23 @@ int dspFlashAddrSwitch(unsigned int flashBlockNo)
  */
 void getSlot(Uint8 *pmark_num,Uint8 *pdsp_num)
 {
-	SPI_ICD framewrite={0},frameread={0};
-	int readlength = 2;
+	unsigned char datawrite[FRAME_MAX_LENGTH]={0},dataread[FRAME_MAX_LENGTH-6]={0};
+	unsigned int regAddr,temp;
+	unsigned int payloadlength;
 
-	framewrite.sync = SYNC_MOSI;
-	framewrite.msglength = 0;
-	framewrite.msgtype = MARK_SLOT_GET;
-
-	spiTransfer(0,0,(Uint8*)&framewrite,framewrite.msglength + FRAME_HEAD_LENGTH,(Uint8*)&frameread,readlength + FRAME_HEAD_LENGTH);
-	spiHeadCheck(framewrite.msgtype,&frameread);
-
-	*pmark_num = (frameread.msgdata[0]>16 ? 16:frameread.msgdata[0]);
-	*pdsp_num = frameread.msgdata[1];
+	regAddr = SPI_FRAME_REG_ADDR(SPI_MARK_GET);
+	payloadlength = 4;
+	datawrite[0] = SPI_FRAME_CMD_READ;
+	datawrite[1] = regAddr>>24&0xff;
+	datawrite[2] = regAddr>>16&0xff;
+	datawrite[3] = regAddr>>8&0xff;
+	datawrite[4] = regAddr&0xff;
+	datawrite[5] = payloadlength-1;
+	spiTransfer(0,0,datawrite,6,dataread,payloadlength);
+	if(dataread[0] == SYNC_MISO){
+		*pmark_num = dataread[3];
+		*pdsp_num = dataread[2];
+	}
 }
 /*****************************************************************/
 /*函数：int getBootMode(void)
@@ -249,17 +254,20 @@ void getSlot(Uint8 *pmark_num,Uint8 *pdsp_num)
  */
 int getBootMode(void)
 {
-	SPI_ICD framewrite={0},frameread={0};
-	int readlength = 1;
+	unsigned char datawrite[FRAME_MAX_LENGTH]={0},dataread[FRAME_MAX_LENGTH-6]={0};
+	unsigned int regAddr,temp;
+	unsigned int payloadlength;
 
-	framewrite.sync = SYNC_MOSI;
-	framewrite.msglength = 0;
-	framewrite.msgtype = BOOT_MODE;
-
-	spiTransfer(0,0,(Uint8*)&framewrite,framewrite.msglength + FRAME_HEAD_LENGTH,(Uint8*)&frameread,readlength + FRAME_HEAD_LENGTH);
-	if(spiHeadCheck(framewrite.msgtype,&frameread) != 0){
-		return -1;
+	regAddr = SPI_FRAME_REG_ADDR(SPI_BOOTMODE_GET);
+	payloadlength = 4;
+	datawrite[0] = SPI_FRAME_CMD_READ;
+	datawrite[1] = regAddr>>24&0xff;
+	datawrite[2] = regAddr>>16&0xff;
+	datawrite[3] = regAddr>>8&0xff;
+	datawrite[4] = regAddr&0xff;
+	datawrite[5] = payloadlength-1;
+	spiTransfer(0,0,datawrite,6,dataread,payloadlength);
+	if(dataread[0] == SYNC_MISO){
+		return dataread[3];
 	}
-
-	return frameread.msgdata[0];
 }

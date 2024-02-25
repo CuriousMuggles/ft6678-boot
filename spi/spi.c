@@ -65,7 +65,7 @@ static UINT32 waitSpiSendComplete(UINT32 dev)
 static INT32 spiMasterInit(UINT32 dev)
 {
 	SPI_MODE_CONFIG *pSpiMode;
-	UINT32 temp = 0x01072004;
+	UINT32 temp = 0x010f2004;
 	
 //	PARAMETER_ASSERT((dev < SPI_DEV_NUM),RET_RARAM1_ERROR);
 	
@@ -147,46 +147,46 @@ static void spiClearRecvFifo(UINT32 dev)
 *****************************************************************************/
 INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT32 wrLen,UINT8 *rdData,UINT32 rdLen)
 {
-    UINT32 i,monitor,temp=0;
+    UINT32 i,temp=0;
 
 //    PARAMETER_ASSERT((wrData != NULL),RET_RARAM3_ERROR);
 //    PARAMETER_ASSERT(((wrLen + rdLen) <= SPI_FIFO_DEPTH),RET_RARAM4_ERROR);
 //    PARAMETER_ASSERT((rdData != NULL),RET_RARAM5_ERROR);
-    /*第一次请求指令*/
+    spiClearRecvFifo(dev);
     spiSlaveSelectEnable(dev,cs);
     
-    for(i = 0 ; i < wrLen; i++){
-		if(gSpiDevModeConfig[dev].rev){
-			SPI_TRANSMIT = *(wrData+i) << 24;
-		}
-		else{
-			SPI_TRANSMIT = *(wrData+i);
-		}
+    for(i = 0 ; i < (wrLen+rdLen); i++){
+    	if(i<wrLen){
+			if(gSpiDevModeConfig[dev].rev){
+				SPI_TRANSMIT = *(wrData+i) << 24;
+			}
+			else{
+				SPI_TRANSMIT = *(wrData+i);
+			}
+    	}
+    	else{
+    		SPI_TRANSMIT = 0;
+    	}
 //            SPIDBG("write %d/%d:0x%x\n",i,wrLen,*(wrData+i));
     }
     waitSpiSendComplete(dev);
     spiSlaveSelectDisable(dev);
 
-    delay_boot_ms(1);
-
-    /*第二次读取指令*/
-    spiClearRecvFifo(dev);
-    spiSlaveSelectEnable(dev,cs);
-
-	for(i = 0 ; i < rdLen+1; i++){/*第一个字节会重复，所以多发一个时钟*/
-		SPI_TRANSMIT = 0;
-	}
-	waitSpiSendComplete(dev);
-	spiSlaveSelectDisable(dev);
-
-	temp = SPI_RECEIVE;/*先读一个重复的字节*/
-    for(i = 0 ; i < rdLen; i++){
-		if(gSpiDevModeConfig[dev].rev){
-			*(rdData + i) = SPI_RECEIVE >> 16 & 0xff;
-		}
-		else{
-			*(rdData + i) = SPI_RECEIVE >> 8 & 0xff;
-		}
+    if(rdLen == 0){
+    	return RET_SUCCESS;
+    }
+    for(i = 0 ; i < (wrLen+rdLen); i++){
+    	if(i<wrLen){
+    		temp = SPI_RECEIVE;
+    	}
+    	else{
+			if(gSpiDevModeConfig[dev].rev){
+				*(rdData + i - wrLen) = SPI_RECEIVE >> 16 & 0xff;
+			}
+			else{
+				*(rdData + i - wrLen) = SPI_RECEIVE >> 8 & 0xff;
+			}
+    	}
     }
 
     return RET_SUCCESS;

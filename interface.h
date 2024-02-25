@@ -3,18 +3,57 @@
 
 #define DSP_BOOT_VERSION	"02.00.00"
 
-#define char2BCD(x)			(((x/10)<<4) | (x%10))
+#define CHAR2BCD(x)			((((x)/10)<<4) | ((x)%10))
+
 #define SYNC_MOSI			(0xa5)
 #define SYNC_MISO			(0x5a)
-#define FRAME_MAXLENGTH		(16)
-#define FRAME_HEAD_LENGTH	(3)
+#define NORMAL_OR_OK		(0x11)
+#define BACKUP_OR_FAIL		(0x22)
+#define FRAME_MAX_LENGTH	(18)
 
-typedef struct{
-	unsigned char sync;
-	unsigned char msglength;
-	unsigned char msgtype;
-	unsigned char msgdata[FRAME_MAXLENGTH-3];
-}SPI_ICD;/*ICD帧格式*/
+#define SPI_FRAME_CMD_READ			(0)
+#define SPI_FRAME_CMD_WRITE			(1)
+#define SPI_FRAME_REG_ADDR(reg)		(4 * reg)
+typedef enum{
+	/*DSP写，FPGA3读*/
+	SPI_DSP_BIT,
+	SPI_FPGA1_BIT,
+	SPI_FPGA2_BIT,
+	SPI_DSP_FLASH_SET,
+	SPI_FPGA1_FALSH_SET,
+	SPI_FPGA2_FLASH_SET,
+	SPI_BOOT_VERSION1_SET,
+	SPI_BOOT_VERSION2_SET,
+	SPI_BOOT_VERSION3_SET,
+	SPI_DSP_VERSION1_SET,
+	SPI_DSP_VERSION2_SET,
+	SPI_DSP_VERSION3_SET,
+	SPI_FPGA1_VERSION1_SET,
+	SPI_FPGA1_VERSION2_SET,
+	SPI_FPGA1_VERSION3_SET,
+	SPI_FPGA2_VERSION1_SET,
+	SPI_FPGA2_VERSION2_SET,
+	SPI_FPGA2_VERSION3_SET,
+	/*DSP写，逻辑判断*/
+	SPI_FPGA1_RELOAD = 30,
+	SPI_FPGA2_RELOAD = 31,
+	/*DSP读，FPGA3写*/
+	SPI_MARK_GET = 32,
+	SPI_BOOTMODE_GET,
+	SPI_DSP_FLASH_GET,
+	SPI_FPGA1_FLASH_GET,
+	SPI_FPGA2_FLASH_GET,
+	SPI_BOOT_VERSION1_GET,
+	SPI_BOOT_VERSION2_GET,
+	SPI_BOOT_VERSION3_GET,
+	SPI_FPGA3_VERSION1_GET,
+	SPI_FPGA3_VERSION2_GET,
+	SPI_FPGA3_VERSION3_GET,
+	SPI_EXTERNAL_TIME1_GET,
+	SPI_EXTERNAL_TIME2_GET,
+	SPI_FPGA1_LOADSTATUS_GET,
+	SPI_FPGA2_LOADSTATUS_GET
+}SPI_REG;
 
 typedef enum{
 	DSP_STATUS,
@@ -68,12 +107,6 @@ typedef struct
 	unsigned char SoftWare_Time_minute; /*BYTE9:软件构件版本-编译时间-分-10_BCD码+BCD码*/
 	unsigned char SoftWare_Time_second; /*BYTE10:软件构件版本-编译时间-秒-10_BCD码+BCD码*/
 }SOFTWARE_VERSION_INFOR;
-
-
-enum{
-	BOOT_NORMAL	= 0x11,
-	BOOT_BACKUP	= 0x22,
-};/*DSP复位原因*/
 
 void setSoftwareInfo(void);
 void softInfoToFpga(void);

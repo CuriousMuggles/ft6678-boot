@@ -24,12 +24,10 @@ void EMIF_init()
 	RCSR=RCSR | 0x40000000;//EMIF功能扩展，包括32位
 	AWCCR=0xf0000080;      //CE[3:0]为异步存储
 	/*EW位置0，禁止扩展等待模式*/
-	A1CR=0xBFFFFFFD;       //CE0配置为16位nor flash
-	A2CR=0xBFFFFFFD;       //CE1配置为8位nor flash
-	A3CR=0xBFFFFFFC;       //CE2配置为8位nor flash
-	if(g_dsp_num == 2){/*只有DSP3有CS3*/
-		A4CR=0xBFFFFFFC;       //CE3配置为8位nor flash
-	}
+	A1CR=0xBFFFFFFD;
+	A2CR=0xBFFFFFFD;
+	A3CR=0xBFFFFFFD;
+	A4CR=0xBFFFFFFD;
 }
 
 void delay(int i)
