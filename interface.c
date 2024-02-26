@@ -179,7 +179,7 @@ int dspFlashAddrSwitch(unsigned int flashBlockNo)
 	unsigned char datawrite[FRAME_MAX_LENGTH]={0},dataread[FRAME_MAX_LENGTH-6]={0};
 	unsigned int regAddr,temp;
 	unsigned int payloadlength;
-	int loopcnt = 10;
+	int loopcnt = 20;
 
 	if(flashBlockNo>31){
 		return -1;
@@ -197,8 +197,9 @@ int dspFlashAddrSwitch(unsigned int flashBlockNo)
 	datawrite[7] = 0;
 	datawrite[8] = 0;
 	datawrite[9] = flashBlockNo & 0x1f;
+	spiTransfer(0,0,datawrite,10,dataread,0);
 
-	delay_boot_ms(1);
+	ddr_pll_delay(2000000);
 
 	regAddr = SPI_FRAME_REG_ADDR(SPI_DSP_FLASH_GET);
 	payloadlength = 4;
@@ -213,7 +214,7 @@ int dspFlashAddrSwitch(unsigned int flashBlockNo)
 		if(dataread[0] == SYNC_MISO && dataread[3] == flashBlockNo){
 			return flashBlockNo;
 		}
-		ddr_pll_delay(1000);
+		ddr_pll_delay(2000000);
 	}
 	return -2;
 }
@@ -229,6 +230,7 @@ void getSlot(Uint8 *pmark_num,Uint8 *pdsp_num)
 	unsigned char datawrite[FRAME_MAX_LENGTH]={0},dataread[FRAME_MAX_LENGTH-6]={0};
 	unsigned int regAddr,temp;
 	unsigned int payloadlength;
+	int loopcnt = 100;
 
 	regAddr = SPI_FRAME_REG_ADDR(SPI_MARK_GET);
 	payloadlength = 4;
@@ -239,10 +241,16 @@ void getSlot(Uint8 *pmark_num,Uint8 *pdsp_num)
 	datawrite[4] = regAddr&0xff;
 	datawrite[5] = payloadlength-1;
 	spiTransfer(0,0,datawrite,6,dataread,payloadlength);
-	if(dataread[0] == SYNC_MISO){
-		*pmark_num = dataread[3];
-		*pdsp_num = dataread[2];
+	while(loopcnt--){
+		spiTransfer(0,0,datawrite,6,dataread,payloadlength);
+		if(dataread[0] == SYNC_MISO){
+			*pmark_num = dataread[3];
+			*pdsp_num = dataread[2];
+			return ;
+		}
+		ddr_pll_delay(2000000);
 	}
+	UART_Print("spi read timeout...\r\n");
 }
 /*****************************************************************/
 /*函数：int getBootMode(void)
@@ -270,4 +278,50 @@ int getBootMode(void)
 	if(dataread[0] == SYNC_MISO){
 		return dataread[3];
 	}
+}
+
+void testfunc(void)
+{
+	unsigned char datawrite[FRAME_MAX_LENGTH]={0},dataread[FRAME_MAX_LENGTH-6]={0};
+	unsigned int regAddr,temp;
+	unsigned int payloadlength;
+	int ret,i;
+	char ch[30];
+#if 0
+	for(i=0;i<32;i++){
+		ret = dspFlashAddrSwitch(i);
+		if(ret != i){
+			ret = 0;
+		}
+	}
+	ret = getBootMode();
+#endif
+#if 0
+	regAddr = SPI_FRAME_REG_ADDR(SPI_FPGA1_RELOAD);
+	payloadlength = 4;
+	datawrite[0] = SPI_FRAME_CMD_WRITE;
+	datawrite[1] = regAddr>>24&0xff;
+	datawrite[2] = regAddr>>16&0xff;
+	datawrite[3] = regAddr>>8&0xff;
+	datawrite[4] = regAddr&0xff;
+	datawrite[5] = payloadlength-1;
+	datawrite[9] = 	0;
+	spiTransfer(0,0,datawrite,10,dataread,0);
+
+	datawrite[9] = 	1;
+	spiTransfer(0,0,datawrite,10,dataread,0);
+#endif
+#if 1
+	unsigned short *emifaddr = (unsigned short *)0x7c00fff0;
+	unsigned short *srcaddr = (unsigned short *)0xc000000;
+	unsigned short *destaddr = (unsigned short *)0x7c00fff4;
+	unsigned int length;
+
+	*emifaddr = 1;
+	for(i=0;i<(length/2);i++){
+		*destaddr = *srcaddr;
+		srcaddr++;
+	}
+	*emifaddr = 0;
+#endif
 }

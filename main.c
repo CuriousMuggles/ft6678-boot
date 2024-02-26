@@ -199,7 +199,16 @@ void usr_dev_init()
 {
 	char ch[20];
 
+	PSC_Open_Clk("EMIF32");
+	EMIF_init();
+	S29GL64S_ID();
+
 	bspSpiInit(0);
+	/*引导APP之前，先上报BOOT的版本和编译时间*/
+	setSoftwareInfo();
+	softInfoToFpga();
+	UART_Print("Version upload done\r\n");
+
 	/*获取芯片标识和槽位*/
 	UART_Config(BaudRate_Value);
 	UART_Print("Uart config done\r\n");
@@ -207,16 +216,6 @@ void usr_dev_init()
 	getSlot(&g_mark_num,&g_dsp_num);
 	sprintf(ch,"done dsp %d,mark %d\r\n",g_dsp_num+1,g_mark_num);
 	UART_Print(ch);
-
-	PSC_Open_Clk("EMIF32");
-	EMIF_init();
-	S29GL64S_ID();
-
-
-	/*引导APP之前，先上报BOOT的版本和编译时间*/
-	setSoftwareInfo();
-	softInfoToFpga();
-	UART_Print("Version upload done\r\n");
 
 }
 
@@ -533,6 +532,7 @@ int main(void)
 		for(jjj=0;jjj<50000000;jjj++);
 		CSL_tscEnable();
 		usr_dev_init();
+//		testfunc();
 		delay_boot_ms(3000);
 
 		/*
