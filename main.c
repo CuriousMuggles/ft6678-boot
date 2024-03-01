@@ -204,6 +204,7 @@ void usr_dev_init()
 	S29GL64S_ID();
 
 	bspSpiInit(0);
+	bootActiveSet();
 	/*引导APP之前，先上报BOOT的版本和编译时间*/
 	setSoftwareInfo();
 	softInfoToFpga();

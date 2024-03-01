@@ -279,7 +279,26 @@ int getBootMode(void)
 		return dataread[3];
 	}
 }
+void bootActiveSet(void)
+{
+	unsigned char datawrite[FRAME_MAX_LENGTH]={0},dataread[FRAME_MAX_LENGTH-6]={0};
+	unsigned int regAddr,temp;
+	unsigned int payloadlength;
 
+	regAddr = SPI_FRAME_REG_ADDR(SPI_BOOT_ACTIVE);
+	payloadlength = 4;
+	datawrite[0] = SPI_FRAME_CMD_WRITE;
+	datawrite[1] = regAddr>>24&0xff;
+	datawrite[2] = regAddr>>16&0xff;
+	datawrite[3] = regAddr>>8&0xff;
+	datawrite[4] = regAddr&0xff;
+	datawrite[5] = payloadlength-1;
+	datawrite[6]= 0xa5;
+	datawrite[7]= 0xa5;
+	datawrite[8]= 0xa5;
+	datawrite[9]= 0xa5;
+	spiTransfer(0,0,datawrite,10,dataread,0);
+}
 void testfunc(void)
 {
 	unsigned char datawrite[FRAME_MAX_LENGTH]={0},dataread[FRAME_MAX_LENGTH-6]={0};

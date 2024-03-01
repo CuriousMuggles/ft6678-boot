@@ -34,6 +34,9 @@ typedef enum{
 	SPI_FPGA2_VERSION1_SET,
 	SPI_FPGA2_VERSION2_SET,
 	SPI_FPGA2_VERSION3_SET,
+	/*DSP写，FPGA3读后清空*/
+	SPI_BOOT_ACTIVE = 28,
+	SPI_APP_ACTIVE =29,
 	/*DSP写，逻辑判断*/
 	SPI_FPGA1_RELOAD = 30,
 	SPI_FPGA2_RELOAD = 31,
@@ -112,4 +115,5 @@ void setSoftwareInfo(void);
 void softInfoToFpga(void);
 int dspFlashAddrSwitch(unsigned int flashBlockNo);
 int getBootMode(void);
+void bootActiveSet(void);
 #endif/*_INTERFACE_H_*/
