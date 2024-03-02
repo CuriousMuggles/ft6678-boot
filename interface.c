@@ -293,10 +293,10 @@ void bootActiveSet(void)
 	datawrite[3] = regAddr>>8&0xff;
 	datawrite[4] = regAddr&0xff;
 	datawrite[5] = payloadlength-1;
-	datawrite[6]= 0xa5;
-	datawrite[7]= 0xa5;
-	datawrite[8]= 0xa5;
-	datawrite[9]= 0xa5;
+	datawrite[6]= 0;
+	datawrite[7]= 0;
+	datawrite[8]= 0;
+	datawrite[9]= 1;
 	spiTransfer(0,0,datawrite,10,dataread,0);
 }
 void testfunc(void)
