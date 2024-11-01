@@ -7,6 +7,7 @@
 #include <string.h>
 #include "UART.h"
 
+char gUartBuffer[UART_MAX_BUFLEN];
 
 /*******************************************************************************
 *函数名：UART_Print(Uint32 BaudRate, const char *strFmt)
@@ -28,7 +29,7 @@ void UART_Print(const char *strFmt)
 *功    能： 开UART时钟函数
 *参    数：无
 *******************************************************************************/
-void 	UART_Config(Uint32 BaudRate)
+void UART_Config(unsigned int BaudRate)
 {
 	unsigned int temp11,temp22;
 	PSC_MDCTL26=0x00000003;                         //使能模块
@@ -39,4 +40,10 @@ void 	UART_Config(Uint32 BaudRate)
 	temp22= MAIN_PLL/temp11;
 	ScalerReg=(temp22*10- 5 )/10;
 	ControlReg=0x220A;                //UART配置为向外部发送数据
+}
+
+void bspPrintf(const char *strFmt,int data0,int data1,int data2,int data3,int data4,int data5)
+{
+    sprintf(gUartBuffer,strFmt,data0,data1,data2,data3,data4,data5);
+	UART_Print(gUartBuffer);
 }

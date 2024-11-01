@@ -14,8 +14,6 @@
  */
 #include "ddr/ddr_regdefine.h"
 #include "ddr/CORE_Memory_Test.h"
-#include "S29GL064S_driver.h"
-#include "interface.h"
 #include <c6x.h>
 #include <csl_cacheAux.h>
 #include <ti/csl/csl_xmc.h>
@@ -23,7 +21,11 @@
 #include <csl_types.h>
 #include <csl_tsc.h>
 #include "UART.h"
+#include "flash/flash.h"
+#include "flash/flash_nor.h"
+#include "spi/spiCmdLib.h"
 
+extern NOR_InfoObj gNorInfo;
 
 #define	cah1			*(unsigned int *)0x01840000
 #define	cah2			*(unsigned int *)0x01840040
@@ -76,6 +78,30 @@ void pll_wait(unsigned int i)
 	unsigned int c = 0;
 	for (c = 0; c < i; c++)
 		asm("	nop 5");
+}
+
+/*******************************************************************************
+*函数名：EMIF_init
+*功    能： EMIF初始化
+*参    数： 无
+*******************************************************************************/
+void EMIF_init(void)
+{
+#define RCSR	     *(unsigned int*)0x20C00000   //版本代码和状态寄存器
+#define AWCCR	 	 *(unsigned int*)0x20C00004   //异步等待周期配置寄存器
+#define A1CR	     *(unsigned int*)0x20C00010   //CE0空间配置寄存器
+#define A2CR	     *(unsigned int*)0x20C00014   //CE0空间配置寄存器
+#define A3CR	     *(unsigned int*)0x20C00018   //CE0空间配置寄存器
+#define A4CR	     *(unsigned int*)0x20C0001c   //CE0空间配置寄存器
+	//RCSR=RCSR | 0x40000000;//EMIF功能扩展，包括32位
+	//AWCCR=0xc0000080;      //CE[3:0]为异步存储
+	RCSR = 0x460400;
+	AWCCR=0xc0000000;
+	/*EW位置0，禁止扩展等待模式*/
+	A1CR=0x3FFFFFFD;       //CE0配置为16位nor flash
+	A2CR=0x3FFFFFFD;       //CE1配置为16位nor flash
+	A3CR=0x3FFFFFFD;       //CE2配置为16位nor flash
+	A4CR=0x3FFFFFFD;       //CE3配置为8位nor flash
 }
 
 static void MainPLL(unsigned int PLLM, unsigned int PLLD,  unsigned int POSTDIV2,unsigned int POSTDIV1)
@@ -199,25 +225,36 @@ void usr_dev_init()
 {
 	char ch[20];
 
-	PSC_Open_Clk("EMIF32");
-	EMIF_init();
-	S29GL64S_ID();
+	UART_Config(BaudRate_Value);
+	UART_Print("\r\n===========FT6678 BOOT START===========\r\n");
 
 	bspSpiInit(0);
-	bootActiveSet();
+	if(bspSpiBit() != RET_SUCCESS){
+		bspPrintf("SPI bit failed\r\n",0,1,2,3,4,5);
+	}
+	else{
+		bspPrintf("SPI bit success\r\n",0,1,2,3,4,5);
+	}
+
+	PSC_Open_Clk("EMIF32");
+	EMIF_init();
+	if (NOR_init(&gNorInfo))
+	{
+		bspPrintf("FLASH Initialization failed\r\n",0,1,2,3,4,5);
+	}
+	else{
+		bspPrintf("FLASH Initialization success\r\n",0,1,2,3,4,5);
+	}
+
 	/*引导APP之前，先上报BOOT的版本和编译时间*/
-	setSoftwareInfo();
 	softInfoToFpga();
-	UART_Print("Version upload done\r\n");
+	bspPrintf("Version upload done\r\n",0,1,2,3,4,5);
+	bspVersionInfoShow();
 
 	/*获取芯片标识和槽位*/
-	UART_Config(BaudRate_Value);
-	UART_Print("Uart config done\r\n");
-	UART_Print("Get DSP slot ...");
+	bspPrintf("Get DSP slot ...",0,1,2,3,4,5);
 	getSlot(&g_mark_num,&g_dsp_num);
-	sprintf(ch,"done dsp %d,mark %d\r\n",g_dsp_num+1,g_mark_num);
-	UART_Print(ch);
-
+	bspPrintf("done dsp %d,mark %d\r\n",g_dsp_num+1,g_mark_num,2,3,4,5);
 }
 
 
@@ -276,7 +313,7 @@ void Start_Boot()
 
 		}
 
-#if 1
+#if 0
 		temp = getBootMode();
 		if(temp == BACKUP_OR_FAIL)/* 默认app启动失败，切换至备用app启动*/
 		{
@@ -289,8 +326,8 @@ void Start_Boot()
 			UART_Print("switch DSP's flash to BLOCK 1 ....");
 		}
 #endif
-		flashRet = dspFlashAddrSwitch(blockNo);  //默认从flash分区1启动应用软件
-		if(flashRet == blockNo)  //切换FLASH地址块正确，切换到正确的地址
+		flashRet = dspFlashAddrSwitch(1);  //默认从flash分区1启动应用软件
+		if(flashRet == RET_SUCCESS)  //切换FLASH地址块正确，切换到正确的地址
 		{
 			UART_Print("successful\r\n");
 			//切换到目标flash地址,用于加载FLASH内数据并启动APP
@@ -303,7 +340,7 @@ void Start_Boot()
 		else  //切换地址失败，不启动任何APP
 		{
 			flashAddrBlock =-1;
-			UART_Print("switch DSP's flash failed,please check fpga3\r\n");
+			UART_Print("switch DSP's flash failed,please check fmql\r\n");
 		}
 	}
 	else
@@ -495,7 +532,6 @@ void set_MPAX()
 	    // 设置XMPAXL寄存器.
 	    CSL_XMC_setXMPAXL (index, &mpaxl);
 }
-
 /*
  * function:
  * input   :
@@ -528,12 +564,12 @@ int main(void)
 		CACHE_setL1DSize(CACHE_L1_0KCACHE);
 		CACHE_setL2Size(CACHE_0KCACHE);
 		MainPLL(40,1,1,1);      //FOUTPOSTDIV=1GHz
+
 		PSC_Close_Clk("SRIO0");
 		PSC_Close_Clk("SRIO1");
 		for(jjj=0;jjj<50000000;jjj++);
 		CSL_tscEnable();
 		usr_dev_init();
-//		testfunc();
 		delay_boot_ms(3000);
 
 		/*
@@ -542,7 +578,7 @@ int main(void)
 		 * @param3: input DRAM width,      option: WIDTH_x16, WIDTH_x8
 		 * @param4: input ecc type,        option: ECC_TYPE, NO_ECC_TYPE
 		 */
-		DDR_entry(DDR_CLK_667MHZ, ROW_16, WIDTH_x16, NO_ECC_TYPE,WIDTH_64BIT);
+		DDR_entry(DDR_CLK_800MHZ, ROW_16, WIDTH_x16, NO_ECC_TYPE,WIDTH_64BIT);
 //		printf("\nDDR Initial Done!\n");
 
 	#ifdef DDR3_ADDRESS_REMAP
@@ -592,16 +628,8 @@ int main(void)
 	{
 		cah1=0x0;
 		cah2=0x0;
-		set_MPAX();
 
-/*
-		*(unsigned int*)0x81000000 = 0x2345678a;
-		unsigned int ret_mpax = *(unsigned int*)0x80000000;
-		printf("mpax test 1 ret : 0x%x\n",ret_mpax);
-		*(unsigned int*)0x80000004 = 0x56789123;
-		ret_mpax = *(unsigned int*)0x81000004;
-		printf("mpax test 2 ret : 0x%x\n",ret_mpax);
-*/
+		set_MPAX();
 
 		Start_Boot();
 	}

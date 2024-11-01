@@ -1,5 +1,7 @@
-#ifndef SYLIXOS_DRIVER_BSPINTERFACE_H_
-#define SYLIXOS_DRIVER_BSPINTERFACE_H_
+#ifndef _BSPINTERFACE_H_
+#define _BSPINTERFACE_H_
+
+
 /***************************************************************************
 通用宏定义
 *****************************************************************************/
@@ -22,8 +24,28 @@ typedef unsigned short 	UINT16;
 typedef char			INT8;
 typedef unsigned char	UINT8;
 
+#define CHAR2BCD(x)			((((x)/10)<<4) | ((x)%10))
+
+#define DSP_BOOT_VERSION	"02.00.00"
+/***************************************************************************
+数据类型定义
+*****************************************************************************/
+typedef struct
+{
+    INT32 version1;         /*版本号1,0-9*/
+    INT32 version2;         /*版本号2,0-99*/
+    INT32 version3;         /*版本号3,0-99*/
+    INT32 version4;         /*版本号4,0-999*/
+    INT32 reserved[6];      /*预留（默认填0）*/
+    INT32 year;             /*生成时间-年份*/
+    INT32 month;            /*生成时间-月份（1-12）*/
+    INT32 day;              /*生成时间-日期（1-31）*/
+    INT32 hour;             /*生成时间-时钟（0-23）*/
+    INT32 minute;           /*生成时间-分钟（0-59）*/
+    INT32 second;           /*生成时间-秒钟（0-59）*/
+} VERSION;/*版本信息结构体*/
 /***************************************************************************
 全局变量声明
 *****************************************************************************/
-
-#endif/*SYLIXOS_DRIVER_BSPINTERFACE_H_*/
+extern void bspPrintf(const char *strFmt,int data0,int data1,int data2,int data3,int data4,int data5);
+#endif/*_BSPINTERFACE_H_*/

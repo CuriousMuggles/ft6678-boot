@@ -15,6 +15,7 @@
 #include "DDR_Regdefine.h"
 #include "PSC.h"
 #include <string.h>
+#include "../UART/UART.h"
 
 #define PSC_MDCTL2   	0x02350a08
 #define PSC_MDSTAT2  	0x02350808
@@ -322,6 +323,7 @@ static void DDRpll(DDR_CLK_t ddr_freq) {
 	temp = 0x2 & DDRPLLCMD;
 	while (!temp) {
 		temp = 0x2 & DDRPLLCMD;
+		bspPrintf("DDRPLLCMD is 0x%08x\r\n",DDRPLLCMD,1,2,3,4,5);
 	}
 	//将DDRPLLC_En中的DDRPLLC_BYPASS写为0，将DDRPLL控制器时钟切换到PLL模式bypass，0为125M或333M时钟；*******
 	DDRPLLC_En = 0;	//???

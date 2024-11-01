@@ -13,7 +13,6 @@
 #define	ScalerReg	     *(unsigned int* )0x0254000c    //分频计数寄存器里的值
 #define	SartAddress	      (unsigned char*)0x0c00b000    //接收数据的起始地址
 
-#define Uint32           unsigned int
 #define MAIN_PLL         1000000000                     //芯片工作主频
 #define BaudRate_Value   115200                         //UART的波特率
 
@@ -21,7 +20,10 @@
 #define PSC_MDCTL26      *(unsigned int*)0x02350a68     //模块控制寄存器
 #define PSC_MDSTAT26     *(unsigned int*)0x02350868     //模块状态寄存器
 
+#define UART_MAX_BUFLEN	(1024)
+
 extern void  UART_Print(const char *strFmt);
-extern void  UART_Config(Uint32 BaudRate);
+extern void  UART_Config(unsigned int BaudRate);
+void bspPrintf(const char *strFmt,int data0,int data1,int data2,int data3,int data4,int data5);
 
 #endif /* UART_H_ */
