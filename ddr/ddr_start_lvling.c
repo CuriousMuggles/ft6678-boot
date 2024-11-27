@@ -220,11 +220,11 @@ static char DDR_hard_wrlvl(unsigned int cs_map,WIDTH_BIT DIS_NUM) {
 				(0x4 << PHY_WRLVL_CAP_CNT_X_OFFSET));
 
 	//******************refer to NO.12************************************//
-	clr_set_reg(DENALI_PHY_33 + PHY_SLICE_OFFSET * 0, MASK_10BIT, 0x140);     //强制让log延时结果与物理拓扑一致，强制为0
-	clr_set_reg(DENALI_PHY_33 + PHY_SLICE_OFFSET * 1, MASK_10BIT, 0x140);
+	clr_set_reg(DENALI_PHY_33 + PHY_SLICE_OFFSET * 6, MASK_10BIT, 0x140);     //强制让log延时结果与物理拓扑一致，强制为0
+	clr_set_reg(DENALI_PHY_33 + PHY_SLICE_OFFSET * 7, MASK_10BIT, 0x140);
     /*phy_wrlvl_early_force_zero_X */
-	clr_set_reg(DENALI_PHY_34 + PHY_SLICE_OFFSET * 0, 0x1, 0x1);
-	clr_set_reg(DENALI_PHY_34 + PHY_SLICE_OFFSET * 1, 0x1, 0x1);
+	clr_set_reg(DENALI_PHY_34 + PHY_SLICE_OFFSET * 6, 0x1, 0x1);
+	clr_set_reg(DENALI_PHY_34 + PHY_SLICE_OFFSET * 7, 0x1, 0x1);
 	/*********************************************************************/
 
 
