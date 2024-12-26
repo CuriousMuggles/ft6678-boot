@@ -229,12 +229,12 @@ void usr_dev_init()
 	UART_Print("\r\n===========FT6678 BOOT START===========\r\n");
 
 	bspSpiInit(0);
-	if(bspSpiBit() != RET_SUCCESS){
-		bspPrintf("SPI bit failed\r\n",0,1,2,3,4,5);
-	}
-	else{
-		bspPrintf("SPI bit success\r\n",0,1,2,3,4,5);
-	}
+	// if(bspSpiBit() != RET_SUCCESS){
+	// 	bspPrintf("SPI bit failed\r\n",0,1,2,3,4,5);
+	// }
+	// else{
+	// 	bspPrintf("SPI bit success\r\n",0,1,2,3,4,5);
+	// }
 
 	PSC_Open_Clk("EMIF32");
 	EMIF_init();
@@ -272,8 +272,6 @@ void Start_Boot()
 	unsigned int address,blockNo;
 	unsigned char temp;
 
-//	unsigned int block_begin_num=0;
-//	Uint16 pFlashBlockNo =0;
 	void  (*exit)();
 
 	/*核0 的时候处理措施*/
@@ -285,7 +283,7 @@ void Start_Boot()
 		dspFlashAddrSwitch(0);
 		for(i_move = 1;i_move<8;i_move++)
 		{
-			flash_ptr = (unsigned int *)0x70000000;
+			flash_ptr = (unsigned int *)FLASH_STARTUP_ADDRS_USER;
 			entryAddr=*(flash_ptr++);
 			while(1)
 			{
@@ -329,7 +327,7 @@ void Start_Boot()
 		flashRet = dspFlashAddrSwitch(1);  //默认从flash分区1启动应用软件
 		if(flashRet == RET_SUCCESS)  //切换FLASH地址块正确，切换到正确的地址
 		{
-			UART_Print("successful\r\n");
+			UART_Print("switch DSP's flash successful\r\n");
 			//切换到目标flash地址,用于加载FLASH内数据并启动APP
 			flash_ptr=(unsigned int *)FLASH_STARTUP_ADDRS_USER; //都是从每个分区的0x000000*2=0MB，默认从0MB地址启动APP
 			for(i = 0;i < APP_FLASH_LEN;i+=4)
@@ -345,18 +343,16 @@ void Start_Boot()
 	}
 	else
 	{
-		//flash_ptr = (unsigned int *)DDR_TEMP_ADDRS_CODE;
+		;
 	}
 
-	flash_ptr = (unsigned int *)DDR_TEMP_ADDRS_CODE;
+	/* 每个核清空自己系统运行的DDR空间0x80000000~0x80FFFFFF，对应物理地址空间0x80000000~0x87FFFFFF */
 	for(i=0;i<0x1000000;i+=4){
 		*(unsigned int*)(0x80000000 + i) = 0;
 	}
-
+	/* 将应用分段搬运到内存运行地址处 */
+	flash_ptr = (unsigned int *)DDR_TEMP_ADDRS_CODE;
 	entryAddr=*(flash_ptr++);
-
-//	UART_Send(4,(char *)length);
-//	UART_Send(4,(char *)DataHead);
 	while(1)
 	{
 		size=*(flash_ptr++); //先读该段尺寸
@@ -380,64 +376,15 @@ void Start_Boot()
 		flash_ptr+=loopCnt;
 	}
 
-	UART_Print("App code copy done\r\n");
-
-	if(DNUM == 0)
-	{
-
-//		CACHE_wbInvAllL1d(CACHE_WAIT);
-//		CACHE_wbInvAllL2(CACHE_WAIT);
-
-		*(unsigned int*)0xa0fffff0 = 0;
-
-#if 1	//启动从核boot
+	// bspPrintf("core %d app code copy done\r\n",DNUM,2,3,4,5,6);
+	/* 主核启动从核开始运行BOOT */
+	if(DNUM == 0){
 		KICK0 = KICK0_UNLOCK;
 		KICK1 = KICK1_UNLOCK;
-#if 1
-		*(uint32_t*) BOOT_MAGIC_ADDR(1) = (uint32_t)_c_int00;
-//		UART_Print("-->(core 0):BOOT_MAGIC_ADDR 1...\r\n ");
-		*((unsigned int *)(0x02620240 + 1*4))|=1;
-	//	while(*(unsigned int*)0xa0fffff0 != 0xe33e);
-	//	*(unsigned int*)0xa0fffff0 = 0;
-
-		for(j=0;j<2000000;j++);
-		*(uint32_t*) BOOT_MAGIC_ADDR(2) = (uint32_t)_c_int00;
-//		UART_Print("-->(core 0)BOOT_MAGIC_ADDR 2...\r\n ");
-		*((unsigned int *)(0x02620240 + 2*4))|=1;
-	//	while(*(unsigned int*)0xa0fffff0 != 0xe33e);
-	//	*(unsigned int*)0xa0fffff0 = 0;
-		for(j=0;j<2000000;j++);
-		*(uint32_t*) BOOT_MAGIC_ADDR(3) = (uint32_t)_c_int00;
-//		UART_Print("-->(core 0)BOOT_MAGIC_ADDR 3...\r\n ");
-		*((unsigned int *)(0x02620240 + 3*4))|=1;
-	//	while(*(unsigned int*)0xa0fffff0 != 0xe33e);
-	//	*(unsigned int*)0xa0fffff0 = 0;
-		for(j=0;j<2000000;j++);
-		*(uint32_t*) BOOT_MAGIC_ADDR(4) = (uint32_t)_c_int00;
-//		UART_Print("-->(core 0)BOOT_MAGIC_ADDR 4...\r\n ");
-		*((unsigned int *)(0x02620240 + 4*4))|=1;
-	//	while(*(unsigned int*)0xa0fffff0 != 0xe33e);
-	//	*(unsigned int*)0xa0fffff0 = 0;
-		for(j=0;j<2000000;j++);
-		*(uint32_t*) BOOT_MAGIC_ADDR(5) = (uint32_t)_c_int00;
-//		UART_Print("-->(core 0)BOOT_MAGIC_ADDR 5...\r\n ");
-		*((unsigned int *)(0x02620240 + 5*4))|=1;
-	//	while(*(unsigned int*)0xa0fffff0 != 0xe33e);
-	//	*(unsigned int*)0xa0fffff0 = 0;
-		for(j=0;j<2000000;j++);
-		*(uint32_t*) BOOT_MAGIC_ADDR(6) = (uint32_t)_c_int00;
-//		UART_Print("-->(core 0)BOOT_MAGIC_ADDR 6...\r\n ");
-		*((unsigned int *)(0x02620240 + 6*4))|=1;
-	//	while(*(unsigned int*)0xa0fffff0 != 0xe33e);
-	//	*(unsigned int*)0xa0fffff0 = 0;
-		for(j=0;j<2000000;j++);
-		*(uint32_t*) BOOT_MAGIC_ADDR(7) = (uint32_t)_c_int00;
-//		UART_Print("-->(core 0)BOOT_MAGIC_ADDR 7...\r\n ");
-		*((unsigned int *)(0x02620240 + 7*4))|=1;
-	//	while(*(unsigned int*)0xa0fffff0 != 0xe33e);
-	//	*(unsigned int*)0xa0fffff0 = 0;
-		for(j=0;j<2000000;j++);
-#endif
+		for(i=1;i<8;i++){
+			*(uint32_t*) BOOT_MAGIC_ADDR(i) = (uint32_t)_c_int00;
+			*((unsigned int *)(0x02620240 + i*4))|=1;
+		}
 		KICK0 = KICK_LOCK;
 		KICK1 = KICK_LOCK;
 
@@ -450,22 +397,6 @@ void Start_Boot()
 		CACHE_enableCaching(134);
 		CACHE_enableCaching(135);
 		for(i=0;i<1000000;i++);
-#else
-		int i_boot;
-		int j_boot;
-		for(*(int *)0x80ffff00=1;*(int *)0x80ffff00<=7;*(int *)0x80ffff00 = *(int *)0x80ffff00 + 1 )
-		{
-			//*(int *)0x80ffff00 = i_boot + 1;
-			KICK0 = KICK0_UNLOCK;
-			KICK1 = KICK1_UNLOCK;
-			*(uint32_t*) BOOT_MAGIC_ADDR(*(int *)0x80ffff00) = (uint32_t)_c_int00;
-			*((unsigned int *)(0x02620240 + (*(int *)0x80ffff00)*4))|=1;
-			for(j_boot=0;j_boot<10000000;j_boot++);
-			KICK0 = KICK_LOCK;
-			KICK1 = KICK_LOCK;
-		}
-#endif
-
 	}
 
 #if 0	//校验内存中数据
@@ -482,28 +413,22 @@ void Start_Boot()
 	UART_Print_D((char *)&entryAddr,4);
 	UART_Print("\r\n");
 #endif
-	*(unsigned int*)0xa0fffff0 = 0xe33e;
-//	_mefence();
-
-/*	unsigned int check_sum_ddr =0;
-	for(j = 0;j < 0x1000000;j+= 4)
-	{
-		check_sum_ddr += *(unsigned int*)(0x80000000 + DNUM * 0x1000000 + j);
-	}
-	*(unsigned int*)(0xa3000000 + DNUM*4) = check_sum_ddr;
-*/
+	/* 主核在这里写同步标志 */
 	*(unsigned int*)(0xa3000020 + DNUM*4) = entryAddr;
-	UART_Print("Jump to system\r\n");
-
-	if(DNUM > 0)
-	{
+	/* 从核等待主核完成应用搬运 */
+	if(DNUM > 0){
 		while(*(unsigned int*)(0xa3000020)!= entryAddr);
-		for(j=0;j<2000000*DNUM;j++);
+		// delay_boot_ms(20+20*(DNUM-1));
+		for(j=0;j<20000000+1000000*(DNUM-1);j++);
+		bspPrintf("%d ",DNUM,2,3,4,5,6);
+		if(DNUM == 7){
+			UART_Print("\r\n");
+		}
 	}
 
+	/* 所有核跳转到应用入口 */
    *(unsigned int *)BOOT_MAGIC_ADDR(DNUM)=entryAddr;
 	 exit = (void(*)())entryAddr;
-
 	 (*exit)();//跳到应用程序入口
 
 }
@@ -570,7 +495,6 @@ int main(void)
 		for(jjj=0;jjj<50000000;jjj++);
 		CSL_tscEnable();
 		usr_dev_init();
-		delay_boot_ms(3000);
 
 		/*
 		 * @param1: input DDR CLK,         option: DDR_CLK_800MHZ,DDR_CLK_667MHZ, DDR_CLK_400MHZ
@@ -579,7 +503,6 @@ int main(void)
 		 * @param4: input ecc type,        option: ECC_TYPE, NO_ECC_TYPE
 		 */
 		DDR_entry(DDR_CLK_800MHZ, ROW_16, WIDTH_x16, NO_ECC_TYPE,WIDTH_64BIT);
-//		printf("\nDDR Initial Done!\n");
 
 	#ifdef DDR3_ADDRESS_REMAP
 		DDR_addrmap_demo();
@@ -603,26 +526,9 @@ int main(void)
 		{
 			UART_Print("DDR3 test failed\r\n");
 		}
-/*
-		volatile unsigned int* lvMarPtr;
-		unsigned int L_Value, H_Value;
-		lvMarPtr = (volatile unsigned int*)0x08000020;
-		H_Value = 0x80000017;
-		L_Value = 0x8200003f;
-
-
-		set_MPAX();
-		*(unsigned int*)0xa0000000 = 0x2345678a;
-			ret = *(unsigned int*)0x80000000;
-			printf("mpax test 1 ret : 0x%x\n",ret);
-			*(unsigned int*)0x80000004 = 0x56789123;
-			ret = *(unsigned int*)0xa0000004;
-			printf("mpax test 2 ret : 0x%x\n",ret);
-*/
 
 		Start_Boot();
 
-		*(unsigned int*)0xc300000 = 0x12345678;
 	}
 	else
 	{
