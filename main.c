@@ -12,73 +12,31 @@
  *
  *============================================================================
  */
-#include "ddr/ddr_regdefine.h"
-#include "ddr/CORE_Memory_Test.h"
 #include <c6x.h>
 #include <csl_cacheAux.h>
 #include <ti/csl/csl_xmc.h>
 #include <ti/csl/csl_xmcAux.h>
-#include <csl_types.h>
-#include <csl_tsc.h>
-#include "UART.h"
-#include "flash/flash.h"
-#include "flash/flash_nor.h"
-#include "spi/spiCmdLib.h"
+#include "driver/ddr/ddr_regdefine.h"
+#include "driver/ddr/CORE_Memory_Test.h"
+#include "driver/uart/uart.h"
+#include "driver/flash/flash.h"
+#include "driver/flash/flash_nor.h"
+#include "driver/spi/spiCmdLib.h"
+#include "bspInterface.h"
 
 extern NOR_InfoObj gNorInfo;
 
 #define	cah1			*(unsigned int *)0x01840000
 #define	cah2			*(unsigned int *)0x01840040
-#define	KICK0 	        *(unsigned int *)0x02620038
-#define	KICK1	        *(unsigned int *)0x0262003C
 #define	MainPLLCTL0		*(unsigned int *)0x02620328
 #define	MainPLLCTL1		*(unsigned int *)0x0262032C
 #define	MainPLLCMD		*(unsigned int *)0x02310100
-extern _c_int00(void);
-#define CHIP_LEVEL_REG  0x02620000
-#define KICK0_UNLOCK (0x83E70B13)
-#define KICK1_UNLOCK (0x95A4F1E0)
-#define KICK_LOCK    0
-#define MAGIC_ADDR     0x87fffc
-#define BOOT_MAGIC_ADDR(x)  (MAGIC_ADDR + (1<<28) + (x<<24))
 
 #define DDR3_TEST_START_ADDRESS (0x80000000)
 #define DDR3_TEST_END_ADDRESS   (DDR3_TEST_START_ADDRESS + 4*(0x100000))
 
-
-#define DDR_TEMP_ADDRS_CODE 0xA0000000
-#define FLASH_AUTO_START_BLOCK        (1)
-#define FLASH_AUTO_BOOT_START_BLOCK       (0)
-#define FLASH_AUTO_APP_START_BLOCK        (1)
-#define FLASH_STARTUP_ADDRS_USER 0x70000000
-#define APP_FLASH_LEN 0x300000
-
 unsigned char g_dsp_num;			/*dsp芯片标识号*/
 unsigned char g_mark_num;			/*模块槽位号*/
-
-void delay_boot_ms(unsigned int N_ms)
-{
-	CSL_Uint64 counterVal1,counterVal2,result;
-
-	counterVal1 = CSL_tscRead();
-
-	while(1)
-	{
-		counterVal2 = CSL_tscRead();
-		result = counterVal2 - counterVal1;
-		if(result > (CSL_Uint64)N_ms * 1000000)
-		{
-			break;
-		}
-	}
-
-}
-void pll_wait(unsigned int i)
-{
-	unsigned int c = 0;
-	for (c = 0; c < i; c++)
-		asm("	nop 5");
-}
 
 /*******************************************************************************
 *函数名：EMIF_init
@@ -160,7 +118,6 @@ static void MainPLL(unsigned int PLLM, unsigned int PLLD,  unsigned int POSTDIV2
 
 }
 
-
 unsigned int ddr3_memory_test (void)
 {
     unsigned int index, value;
@@ -202,25 +159,32 @@ unsigned int ddr3_memory_test (void)
 
     return 0;
 }
+static int ddrInit(void)
+{
+	int ret;
+/*
+		* @param1: input DDR CLK,         option: DDR_CLK_800MHZ,DDR_CLK_667MHZ, DDR_CLK_400MHZ
+		* @param2: input DRAM row number, option: ROW_16, ROW_15, ROW_14,ROW_13
+		* @param3: input DRAM width,      option: WIDTH_x16, WIDTH_x8
+		* @param4: input ecc type,        option: ECC_TYPE, NO_ECC_TYPE
+		*/
+	DDR_entry(DDR_CLK_800MHZ, ROW_16, WIDTH_x16, NO_ECC_TYPE,WIDTH_64BIT);
 
-#define PTCMD			*(unsigned int volatile *)(0x02350120)
-#define PSC_MDCTL11		*(unsigned int volatile *)(0x02350a2c)//srio 0
-#define PSC_MDCTL13		*(unsigned int volatile *)(0x02350a34)//srio 1
-#define PSC_MDSTAT11	*(unsigned int volatile *)(0x0235082c)//srio 0
-#define PSC_MDSTAT13	*(unsigned int volatile *)(0x02350834)//srio 1
-unsigned int SrioClkClose(unsigned int SrioInstance){
-	if(SrioInstance){
-		PSC_MDCTL13 = 0x00000000;
-		PTCMD = 0x1;
-		while( (PSC_MDSTAT13 & 0x00000800)!=0x00000800 );
-	}else{
-		PSC_MDCTL11 = 0x00000000;
-		PTCMD = 0x1;
-		while( (PSC_MDSTAT11 & 0x00000800)!=0x00000800 );
+	#ifdef DDR3_ADDRESS_REMAP
+		DDR_addrmap_demo();
+	#endif
+
+	UART_Print("DDR3 test begin\r\n");
+	ret = ddr3_memory_test();
+	if(ret == 0)
+	{
+		UART_Print("DDR3 test success\r\n");
 	}
-	return 0;
+	else
+	{
+		UART_Print("DDR3 test failed\r\n");
+	}
 }
-
 void usr_dev_init()
 {
 	char ch[20];
@@ -229,13 +193,6 @@ void usr_dev_init()
 	UART_Print("\r\n===========FT6678 BOOT START===========\r\n");
 
 	bspSpiInit(0);
-	// if(bspSpiBit() != RET_SUCCESS){
-	// 	bspPrintf("SPI bit failed\r\n",0,1,2,3,4,5);
-	// }
-	// else{
-	// 	bspPrintf("SPI bit success\r\n",0,1,2,3,4,5);
-	// }
-
 	PSC_Open_Clk("EMIF32");
 	EMIF_init();
 	if (NOR_init(&gNorInfo))
@@ -255,22 +212,18 @@ void usr_dev_init()
 	bspPrintf("Get DSP slot ...",0,1,2,3,4,5);
 	getSlot(&g_mark_num,&g_dsp_num);
 	bspPrintf("done dsp %d,mark %d\r\n",g_dsp_num+1,g_mark_num,2,3,4,5);
+
+	ddrInit();
 }
 
 
-int flashRet = 0;
-int flashAddrBlock = 0;
 void Start_Boot()
 {
-	unsigned int DataHead[5];
-	unsigned int i,j,length;
-
+	unsigned int i,j;
 	unsigned int entryAddr;
-	unsigned int size,startaddr;
-	unsigned int *flash_ptr;
-	unsigned int loopCnt=0;
-	unsigned int address,blockNo;
-	unsigned char temp;
+	unsigned int * flash_ptr;
+	int flashRet = 0;
+	int i_move = 1;
 
 	void  (*exit)();
 
@@ -278,66 +231,23 @@ void Start_Boot()
 	if(DNUM == 0)
 	{
 		//核0将boot搬运到每个从核的boot运行段
-		int i_move = 1;
-
 		dspFlashAddrSwitch(0);
-		for(i_move = 1;i_move<8;i_move++)
-		{
-			flash_ptr = (unsigned int *)FLASH_STARTUP_ADDRS_USER;
-			entryAddr=*(flash_ptr++);
-			while(1)
-			{
-				size=*(flash_ptr++); //先读该段尺寸
-				loopCnt=size/4;/*size的单位为字节*/
-				if(size%4!=0)
-				{
-					loopCnt++;
-				}
-				if(loopCnt == 0)
-					break;
-				startaddr=*(flash_ptr++);
-				startaddr+=0x10000000 + i_move*0x1000000;
-
-				for(i=0;i<loopCnt;i++)
-				{
-					do
-					{
-						*(volatile unsigned int *)(startaddr+4*i)=*(flash_ptr+i);
-					}
-					while(*( volatile unsigned int *)(startaddr+4*i)!=*(flash_ptr+i));/*判断一下*/
-				}
-				flash_ptr+=loopCnt;
-			}
-
+		for(i_move = 1;i_move<8;i_move++){
+			entryAddr = reload_dat_boot(FLASH_STARTUP_ADDRS_BOOT,i_move);
 		}
 
-#if 0
-		temp = getBootMode();
-		if(temp == BACKUP_OR_FAIL)/* 默认app启动失败，切换至备用app启动*/
-		{
-			blockNo = 31;
-			UART_Print("switch DSP's flash to BLOCK 31 ....");
-		}
-		else/* 上电启动默认app */
-		{
-			blockNo = 1;
-			UART_Print("switch DSP's flash to BLOCK 1 ....");
-		}
-#endif
 		flashRet = dspFlashAddrSwitch(1);  //默认从flash分区1启动应用软件
 		if(flashRet == RET_SUCCESS)  //切换FLASH地址块正确，切换到正确的地址
 		{
 			UART_Print("switch DSP's flash successful\r\n");
 			//切换到目标flash地址,用于加载FLASH内数据并启动APP
-			flash_ptr=(unsigned int *)FLASH_STARTUP_ADDRS_USER; //都是从每个分区的0x000000*2=0MB，默认从0MB地址启动APP
-			for(i = 0;i < APP_FLASH_LEN;i+=4)
-			{
-				*(unsigned int *)(DDR_TEMP_ADDRS_CODE + i) = *(unsigned int *)(FLASH_STARTUP_ADDRS_USER + i);
+			flash_ptr=(unsigned int *)FLASH_STARTUP_ADDRS_APP;
+			for(i = 0;i < APP_FLASH_LEN;i+=4){
+				*(unsigned int *)(DDR_TEMP_ADDRS_CODE + i) = *(unsigned int *)(FLASH_STARTUP_ADDRS_APP + i);
 			}
 		}
 		else  //切换地址失败，不启动任何APP
 		{
-			flashAddrBlock =-1;
 			UART_Print("switch DSP's flash failed,please check fmql\r\n");
 		}
 	}
@@ -350,40 +260,15 @@ void Start_Boot()
 	for(i=0;i<0x1000000;i+=4){
 		*(unsigned int*)(0x80000000 + i) = 0;
 	}
-	/* 将应用分段搬运到内存运行地址处 */
-	flash_ptr = (unsigned int *)DDR_TEMP_ADDRS_CODE;
-	entryAddr=*(flash_ptr++);
-	while(1)
-	{
-		size=*(flash_ptr++); //先读该段尺寸
-		loopCnt=size/4;/*size的单位为字节*/
-		if(size%4!=0)
-		{
-			loopCnt++;
-		}
-		if(loopCnt == 0)
-			break;
-		startaddr=*(flash_ptr++);
+	entryAddr = reload_dat_app(DDR_TEMP_ADDRS_CODE,DNUM);
 
-		for(i=0;i<loopCnt;i++)
-		{
-			do
-			{
-				*(volatile unsigned int *)(startaddr+4*i)=*(flash_ptr+i);
-			}
-			while(*( volatile unsigned int *)(startaddr+4*i)!=*(flash_ptr+i));/*判断一下*/
-		}
-		flash_ptr+=loopCnt;
-	}
-
-	// bspPrintf("core %d app code copy done\r\n",DNUM,2,3,4,5,6);
 	/* 主核启动从核开始运行BOOT */
 	if(DNUM == 0){
 		KICK0 = KICK0_UNLOCK;
 		KICK1 = KICK1_UNLOCK;
 		for(i=1;i<8;i++){
-			*(uint32_t*) BOOT_MAGIC_ADDR(i) = (uint32_t)_c_int00;
-			*((unsigned int *)(0x02620240 + i*4))|=1;
+			BOOT_MAGIC_ADDR(i) = (uint32_t)_c_int00;
+			IPCGR(i) |= 1;
 		}
 		KICK0 = KICK_LOCK;
 		KICK1 = KICK_LOCK;
@@ -399,26 +284,11 @@ void Start_Boot()
 		for(i=0;i<1000000;i++);
 	}
 
-#if 0	//校验内存中数据
-	checkSum = 0;
-	for(i=0;i<0x1000000;i+=2){
-			checkSum += *(unsigned short*)(0x80000000 + i);
-	}
-    core_NUM = DNUM;
-	UART_Print("-->(core ");
-	UART_Print_D((char *)&core_NUM,1);
-	UART_Print("): CheckSUM: ");
-	UART_Print_D((char *)&checkSum,4);
-	UART_Print(" entryAddr: ");
-	UART_Print_D((char *)&entryAddr,4);
-	UART_Print("\r\n");
-#endif
 	/* 主核在这里写同步标志 */
 	*(unsigned int*)(0xa3000020 + DNUM*4) = entryAddr;
 	/* 从核等待主核完成应用搬运 */
 	if(DNUM > 0){
 		while(*(unsigned int*)(0xa3000020)!= entryAddr);
-		// delay_boot_ms(20+20*(DNUM-1));
 		for(j=0;j<20000000+1000000*(DNUM-1);j++);
 		bspPrintf("%d ",DNUM,2,3,4,5,6);
 		if(DNUM == 7){
@@ -471,7 +341,6 @@ int main(void)
 	int jjj;
 
 	//主频
-	//MainPLL(32,1,1,1);    //FOUTPOSTDIV=800MHz
 	if(DNUM == 0)    		//核0
 	{
 		cah1=0x0;
@@ -488,44 +357,18 @@ int main(void)
 		CACHE_setL1PSize(CACHE_L1_0KCACHE);
 		CACHE_setL1DSize(CACHE_L1_0KCACHE);
 		CACHE_setL2Size(CACHE_0KCACHE);
+
+		/* 配置主频 */
+		// MainPLL(32,1,1,1);    //FOUTPOSTDIV=800MHz
 		MainPLL(40,1,1,1);      //FOUTPOSTDIV=1GHz
 
+		/* 关闭SRIO时钟 */
 		PSC_Close_Clk("SRIO0");
 		PSC_Close_Clk("SRIO1");
-		for(jjj=0;jjj<50000000;jjj++);
 		CSL_tscEnable();
+
+		/* 驱动初始化 */
 		usr_dev_init();
-
-		/*
-		 * @param1: input DDR CLK,         option: DDR_CLK_800MHZ,DDR_CLK_667MHZ, DDR_CLK_400MHZ
-		 * @param2: input DRAM row number, option: ROW_16, ROW_15, ROW_14,ROW_13
-		 * @param3: input DRAM width,      option: WIDTH_x16, WIDTH_x8
-		 * @param4: input ecc type,        option: ECC_TYPE, NO_ECC_TYPE
-		 */
-		DDR_entry(DDR_CLK_800MHZ, ROW_16, WIDTH_x16, NO_ECC_TYPE,WIDTH_64BIT);
-
-	#ifdef DDR3_ADDRESS_REMAP
-		DDR_addrmap_demo();
-	#endif
-
-		/*
-		 * @param1: memtest start address;
-		 * @param2: memtest end address;
-		 * 			NOTICE: unsigned int type;
-		 * @param3: Don't modified
-		 * @param4: Don't modified
-		 */
-		//DSP_memory_test(0x80000000, 0xFFFFFFFF, 1, "DDR3");
-		UART_Print("DDR3 test begin\r\n");
-		ret = ddr3_memory_test();
-		if(ret == 0)
-		{
-			UART_Print("DDR3 test success\r\n");
-		}
-		else
-		{
-			UART_Print("DDR3 test failed\r\n");
-		}
 
 		Start_Boot();
 

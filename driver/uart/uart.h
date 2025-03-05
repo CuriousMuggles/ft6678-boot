@@ -7,6 +7,8 @@
 #ifndef UART_H_
 #define UART_H_
 
+#include "bspInterface.h"
+
 #define	DataReg          *(unsigned char*)0x02540000    //数据寄存器里的值
 #define	ControlReg 	     *(unsigned int* )0x02540008    //控制寄存器里的值
 #define	StatusReg 	     *(unsigned int* )0x02540004    //状态寄存器里的值
@@ -20,9 +22,11 @@
 #define PSC_MDCTL26      *(unsigned int*)0x02350a68     //模块控制寄存器
 #define PSC_MDSTAT26     *(unsigned int*)0x02350868     //模块状态寄存器
 
+#define STATUS_TF       (1<<9)
 #define UART_MAX_BUFLEN	(1024)
 
-extern void  UART_Print(const char *strFmt);
+extern INT32 bspUartSend(INT8 *pSendData,UINT32 sendLen,UINT32 wait);
+extern void  UART_Print(char *strFmt);
 extern void  UART_Config(unsigned int BaudRate);
 void bspPrintf(const char *strFmt,int data0,int data1,int data2,int data3,int data4,int data5);
 

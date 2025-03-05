@@ -2,6 +2,7 @@
 #define _BSPINTERFACE_H_
 
 
+
 /***************************************************************************
 通用宏定义
 *****************************************************************************/
@@ -17,16 +18,37 @@
 #define RET_RARAM6_ERROR    -9  /*输入参数6错误*/
 #define RET_RARAM7_ERROR    -10 /*输入参数7错误*/
 
-typedef int 			INT32;
-typedef unsigned int 	UINT32;
-typedef short 			INT16;
-typedef unsigned short 	UINT16;
-typedef char			INT8;
-typedef unsigned char	UINT8;
+typedef unsigned long long int 	UINT64;
+typedef long long int 			INT64;
+typedef int 					INT32;
+typedef unsigned int 			UINT32;
+typedef short 					INT16;
+typedef unsigned short 			UINT16;
+typedef char					INT8;
+typedef unsigned char			UINT8;
 
 #define CHAR2BCD(x)			((((x)/10)<<4) | ((x)%10))
+/***************************************************************************
+ 全局寄存器宏定义
+*****************************************************************************/
+#define	KICK0 	        *(unsigned int *)0x02620038
+#define	KICK1	        *(unsigned int *)0x0262003C
+#define KICK0_UNLOCK    (0x83E70B13)
+#define KICK1_UNLOCK    (0x95A4F1E0)
+#define KICK_LOCK       0
 
+#define BOOT_MAGIC_ADDR(x)  *(unsigned int*)(0x87fffc + (1<<28) + ((x)<<24))
+#define IPCGR(x)		    *(unsigned int *)(0x2620240 + (x)*4)
+
+/***************************************************************************
+用户宏定义
+*****************************************************************************/
 #define DSP_BOOT_VERSION	"02.00.00"
+
+#define FLASH_STARTUP_ADDRS_BOOT    (0x70000000)    /* BOOT在FLASH中的地址 */
+#define FLASH_STARTUP_ADDRS_APP     (0x70000000)    /* APP在FLASH中的地址 */
+#define DDR_TEMP_ADDRS_CODE         (0xA0000000)    /* APP临时拷贝地址 */
+#define APP_FLASH_LEN               (0x300000)      /* APP临时拷贝长度 */
 /***************************************************************************
 数据类型定义
 *****************************************************************************/
@@ -47,5 +69,13 @@ typedef struct
 /***************************************************************************
 全局变量声明
 *****************************************************************************/
+extern void usleep(unsigned int n_us);
+extern void msleep(unsigned int n_ms);
+extern void sleep(unsigned int n_s);
+extern void pll_wait(unsigned int i);
+extern UINT32 reload_dat_boot(UINT32 srcAddr,UINT32 coreNum);
+extern UINT32 reload_dat_app(UINT32 srcAddr,UINT32 coreNum);
+extern _c_int00(void);
+
 extern void bspPrintf(const char *strFmt,int data0,int data1,int data2,int data3,int data4,int data5);
 #endif/*_BSPINTERFACE_H_*/

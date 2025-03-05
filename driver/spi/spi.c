@@ -9,7 +9,7 @@
 #include <string.h>
 #include "bspInterface.h"
 #include "spi.h"
-#include "../PSC.h"
+#include "driver/psc/psc.h"
 
 static SPI_MODE_CONFIG gSpiDevModeConfig[SPI_DEV_NUM]={
 		{

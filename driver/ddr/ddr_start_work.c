@@ -13,9 +13,9 @@
  *============================================================================
  */
 #include "DDR_Regdefine.h"
-#include "PSC.h"
+#include "driver/psc/psc.h"
 #include <string.h>
-#include "../UART/UART.h"
+#include "driver/uart/uart.h"
 
 #define PSC_MDCTL2   	0x02350a08
 #define PSC_MDSTAT2  	0x02350808
