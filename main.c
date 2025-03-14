@@ -35,31 +35,31 @@ extern NOR_InfoObj gNorInfo;
 #define DDR3_TEST_START_ADDRESS (0x80000000)
 #define DDR3_TEST_END_ADDRESS   (DDR3_TEST_START_ADDRESS + 4*(0x100000))
 
-unsigned char g_dsp_num;			/*dspĞ¾Æ¬±êÊ¶ºÅ*/
-unsigned char g_mark_num;			/*Ä£¿é²ÛÎ»ºÅ*/
+unsigned char g_dsp_num;			/*dspèŠ¯ç‰‡æ ‡è¯†å·*/
+unsigned char g_mark_num;			/*æ¨¡å—æ§½ä½å·*/
 
 /*******************************************************************************
-*º¯ÊıÃû£ºEMIF_init
-*¹¦    ÄÜ£º EMIF³õÊ¼»¯
-*²Î    Êı£º ÎŞ
+*å‡½æ•°åï¼šEMIF_init
+*åŠŸ    èƒ½ï¼š EMIFåˆå§‹åŒ–
+*å‚    æ•°ï¼š æ— 
 *******************************************************************************/
 void EMIF_init(void)
 {
-#define RCSR	     *(unsigned int*)0x20C00000   //°æ±¾´úÂëºÍ×´Ì¬¼Ä´æÆ÷
-#define AWCCR	 	 *(unsigned int*)0x20C00004   //Òì²½µÈ´ıÖÜÆÚÅäÖÃ¼Ä´æÆ÷
-#define A1CR	     *(unsigned int*)0x20C00010   //CE0¿Õ¼äÅäÖÃ¼Ä´æÆ÷
-#define A2CR	     *(unsigned int*)0x20C00014   //CE0¿Õ¼äÅäÖÃ¼Ä´æÆ÷
-#define A3CR	     *(unsigned int*)0x20C00018   //CE0¿Õ¼äÅäÖÃ¼Ä´æÆ÷
-#define A4CR	     *(unsigned int*)0x20C0001c   //CE0¿Õ¼äÅäÖÃ¼Ä´æÆ÷
-	//RCSR=RCSR | 0x40000000;//EMIF¹¦ÄÜÀ©Õ¹£¬°üÀ¨32Î»
-	//AWCCR=0xc0000080;      //CE[3:0]ÎªÒì²½´æ´¢
+#define RCSR	     *(unsigned int*)0x20C00000   //ç‰ˆæœ¬ä»£ç å’ŒçŠ¶æ€å¯„å­˜å™¨
+#define AWCCR	 	 *(unsigned int*)0x20C00004   //å¼‚æ­¥ç­‰å¾…å‘¨æœŸé…ç½®å¯„å­˜å™¨
+#define A1CR	     *(unsigned int*)0x20C00010   //CE0ç©ºé—´é…ç½®å¯„å­˜å™¨
+#define A2CR	     *(unsigned int*)0x20C00014   //CE0ç©ºé—´é…ç½®å¯„å­˜å™¨
+#define A3CR	     *(unsigned int*)0x20C00018   //CE0ç©ºé—´é…ç½®å¯„å­˜å™¨
+#define A4CR	     *(unsigned int*)0x20C0001c   //CE0ç©ºé—´é…ç½®å¯„å­˜å™¨
+	//RCSR=RCSR | 0x40000000;//EMIFåŠŸèƒ½æ‰©å±•ï¼ŒåŒ…æ‹¬32ä½
+	//AWCCR=0xc0000080;      //CE[3:0]ä¸ºå¼‚æ­¥å­˜å‚¨
 	RCSR = 0x460400;
 	AWCCR=0xc0000000;
-	/*EWÎ»ÖÃ0£¬½ûÖ¹À©Õ¹µÈ´ıÄ£Ê½*/
-	A1CR=0x3FFFFFFD;       //CE0ÅäÖÃÎª16Î»nor flash
-	A2CR=0x3FFFFFFD;       //CE1ÅäÖÃÎª16Î»nor flash
-	A3CR=0x3FFFFFFD;       //CE2ÅäÖÃÎª16Î»nor flash
-	A4CR=0x3FFFFFFD;       //CE3ÅäÖÃÎª8Î»nor flash
+	/*EWä½ç½®0ï¼Œç¦æ­¢æ‰©å±•ç­‰å¾…æ¨¡å¼*/
+	A1CR=0x3FFFFFFD;       //CE0é…ç½®ä¸º16ä½nor flash
+	A2CR=0x3FFFFFFD;       //CE1é…ç½®ä¸º16ä½nor flash
+	A3CR=0x3FFFFFFD;       //CE2é…ç½®ä¸º16ä½nor flash
+	A4CR=0x3FFFFFFD;       //CE3é…ç½®ä¸º8ä½nor flash
 }
 
 static void MainPLL(unsigned int PLLM, unsigned int PLLD,  unsigned int POSTDIV2,unsigned int POSTDIV1)
@@ -83,37 +83,37 @@ static void MainPLL(unsigned int PLLM, unsigned int PLLD,  unsigned int POSTDIV2
 	else
 		Main_POSTDIV1 = POSTDIV1;
 
-	//CLC¼Ä´æÆ÷±£»¤»úÖÆ½âËø
-	/*¶ÔKicker»úÖÆ½âËøÊ±£¬ĞèÒªÍ¨¹ı¶ÔÁ½¸öMMR¶Ô£¨KICK0ºÍKICK1£©¼Ä´æÆ÷Ğ´ÈëÌØ¶¨Êı¾İ£¨KICK0Îª0x83e70b13£¬KICK1Îª0x95a4f1e0£©¡£
-	 ¶ÔÈÎÒâÒ»¸öKicker MMRsĞ´ÈëÆäËûÊı¾İ½«Ëø¶¨kick»úÖÆ£¬´ËÊ±£¬CLC MMRsÖ»¿É¶Á¡£*/KICK0 = 0x83e70b13;
+	//CLCå¯„å­˜å™¨ä¿æŠ¤æœºåˆ¶è§£é”
+	/*å¯¹Kickeræœºåˆ¶è§£é”æ—¶ï¼Œéœ€è¦é€šè¿‡å¯¹ä¸¤ä¸ªMMRå¯¹ï¼ˆKICK0å’ŒKICK1ï¼‰å¯„å­˜å™¨å†™å…¥ç‰¹å®šæ•°æ®ï¼ˆKICK0ä¸º0x83e70b13ï¼ŒKICK1ä¸º0x95a4f1e0ï¼‰ã€‚
+	 å¯¹ä»»æ„ä¸€ä¸ªKicker MMRså†™å…¥å…¶ä»–æ•°æ®å°†é”å®škickæœºåˆ¶ï¼Œæ­¤æ—¶ï¼ŒCLC MMRsåªå¯è¯»ã€‚*/KICK0 = 0x83e70b13;
 	KICK1 = 0x95a4f1e0;
 
-	/*ÅäÖÃÖ÷PLLÏµÍ³Ê±ÖÓ*/MainPLLCMD = 0x21;  //½«MainPLLCÊä³öÊ±ÖÓÄ£Ê½ÇĞ»»ÎªbypassÄ£Ê½
-	//ÖÁÉÙµÈ´ıÊäÈëÊ±ÖÓCLKËÄ¸öÊ±ÖÓÖÜÆÚ£¬À´±£Ö¤ÏµÍ³Ê±ÖÓÇĞ»»µ½BYPASSÄ£Ê½£»
+	/*é…ç½®ä¸»PLLç³»ç»Ÿæ—¶é’Ÿ*/MainPLLCMD = 0x21;  //å°†MainPLLCè¾“å‡ºæ—¶é’Ÿæ¨¡å¼åˆ‡æ¢ä¸ºbypassæ¨¡å¼
+	//è‡³å°‘ç­‰å¾…è¾“å…¥æ—¶é’ŸCLKå››ä¸ªæ—¶é’Ÿå‘¨æœŸï¼Œæ¥ä¿è¯ç³»ç»Ÿæ—¶é’Ÿåˆ‡æ¢åˆ°BYPASSæ¨¡å¼ï¼›
 	pll_wait(20);
 
-	//½«MainPLLCMDÖĞµÄPDĞ´Îª1£¬¹Ø¶ÏPLL£»
+	//å°†MainPLLCMDä¸­çš„PDå†™ä¸º1ï¼Œå…³æ–­PLLï¼›
 	MainPLLCMD = 0x2;
 
 	/** MAINPLLCTL0 Register.*****************************************
 	 * |  31...18  | 17...6   |5...0     |                         *
 	 * |Reserved   |  PLLM    |PLLD      |**************************/MainPLLCTL0 =
-			(Main_PLLM << 6) | Main_PLLD;	//ÉèÖÃMainPLLµÄÊäÈë¿ØÖÆĞÅºÅ
+			(Main_PLLM << 6) | Main_PLLD;	//è®¾ç½®MainPLLçš„è¾“å…¥æ§åˆ¶ä¿¡å·
 
 	/** MAINPLLCTL1 Register.******************************************
 	 * |31...9  |  8  |   7      |   6   |   5...3 | 2...0  | 			*
 	 * |Reserved|ENSAT| PLLOUTCTL| BYPASS| POSTDIV2|POSTDIV1|********/MainPLLCTL1 =
-			(MainPLLCTL1 & 0xffffff40) | (Main_POSTDIV2 << 3) | Main_POSTDIV1;//Ö÷PLLÊä³öÊ±ÖÓÊ¹ÄÜ//ÅäÖÃPLLµÄPOSTDIV2¡¢POSTDIV1ÏµÊı
-	pll_wait(100);	//ÖÁÉÙµÈ´ı1usºó½«MainPLLCMDÖĞµÄPDÎ»Ğ´Îª0
+			(MainPLLCTL1 & 0xffffff40) | (Main_POSTDIV2 << 3) | Main_POSTDIV1;//ä¸»PLLè¾“å‡ºæ—¶é’Ÿä½¿èƒ½//é…ç½®PLLçš„POSTDIV2ã€POSTDIV1ç³»æ•°
+	pll_wait(100);	//è‡³å°‘ç­‰å¾…1usåå°†MainPLLCMDä¸­çš„PDä½å†™ä¸º0
 	MainPLLCMD = 0x0;
 
-	//²éÑ¯MainPLLCMDÖĞµÄLOCKÊÇ·ñÎª1£¬ÅĞ¶ÏÊ±ÖÓÊÇ·ñÎÈ¶¨
+	//æŸ¥è¯¢MainPLLCMDä¸­çš„LOCKæ˜¯å¦ä¸º1ï¼Œåˆ¤æ–­æ—¶é’Ÿæ˜¯å¦ç¨³å®š
 	temp = 0x40 & MainPLLCMD;
 	while (!temp) {
 		temp = 0x40 & MainPLLCMD;
 	}
 
-	MainPLLCMD = 0x1;	//½«MainPLL¿ØÖÆÆ÷Ê±ÖÓÇĞ»»µ½PLLÄ£Ê½
+	MainPLLCMD = 0x1;	//å°†MainPLLæ§åˆ¶å™¨æ—¶é’Ÿåˆ‡æ¢åˆ°PLLæ¨¡å¼
 	pll_wait(200);
 
 }
@@ -174,148 +174,64 @@ static int ddrInit(void)
 		DDR_addrmap_demo();
 	#endif
 
-	UART_Print("DDR3 test begin\r\n");
+	bspUartPrintString("DDR3 test begin\r\n");
 	ret = ddr3_memory_test();
 	if(ret == 0)
 	{
-		UART_Print("DDR3 test success\r\n");
+		bspUartPrintString("DDR3 test success\r\n");
 	}
 	else
 	{
-		UART_Print("DDR3 test failed\r\n");
+		bspUartPrintString("DDR3 test failed\r\n");
 	}
 }
 void usr_dev_init()
 {
 	char ch[20];
 
-	UART_Config(BaudRate_Value);
-	UART_Print("\r\n===========FT6678 BOOT START===========\r\n");
+	bspUartInit(BaudRate_Value);
+	bspUartPrintString("\r\n===========FT6678 BOOT START===========\r\n");
 
 	bspSpiInit(0);
 	PSC_Open_Clk("EMIF32");
 	EMIF_init();
 	if (NOR_init(&gNorInfo))
 	{
-		bspPrintf("FLASH Initialization failed\r\n",0,1,2,3,4,5);
+		printfk("FLASH Initialization failed\r\n");
 	}
 	else{
-		bspPrintf("FLASH Initialization success\r\n",0,1,2,3,4,5);
+		printfk("FLASH Initialization success\r\n");
 	}
 
-	/*Òıµ¼APPÖ®Ç°£¬ÏÈÉÏ±¨BOOTµÄ°æ±¾ºÍ±àÒëÊ±¼ä*/
+	/*å¼•å¯¼APPä¹‹å‰ï¼Œå…ˆä¸ŠæŠ¥BOOTçš„ç‰ˆæœ¬å’Œç¼–è¯‘æ—¶é—´*/
 	softInfoToFpga();
-	bspPrintf("Version upload done\r\n",0,1,2,3,4,5);
+	printfk("Version upload done\r\n");
 	bspVersionInfoShow();
 
-	/*»ñÈ¡Ğ¾Æ¬±êÊ¶ºÍ²ÛÎ»*/
-	bspPrintf("Get DSP slot ...",0,1,2,3,4,5);
+	/*è·å–èŠ¯ç‰‡æ ‡è¯†å’Œæ§½ä½*/
+	printfk("Get DSP slot ...");
 	getSlot(&g_mark_num,&g_dsp_num);
-	bspPrintf("done dsp %d,mark %d\r\n",g_dsp_num+1,g_mark_num,2,3,4,5);
+	printfk("done dsp %d,mark %d\r\n",g_dsp_num+1,g_mark_num);
 
 	ddrInit();
 }
 
 
-void Start_Boot()
-{
-	unsigned int i,j;
-	unsigned int entryAddr;
-	unsigned int * flash_ptr;
-	int flashRet = 0;
-	int i_move = 1;
 
-	void  (*exit)();
-
-	/*ºË0 µÄÊ±ºò´¦Àí´ëÊ©*/
-	if(DNUM == 0)
-	{
-		//ºË0½«boot°áÔËµ½Ã¿¸ö´ÓºËµÄbootÔËĞĞ¶Î
-		dspFlashAddrSwitch(0);
-		for(i_move = 1;i_move<8;i_move++){
-			entryAddr = reload_dat_boot(FLASH_STARTUP_ADDRS_BOOT,i_move);
-		}
-
-		flashRet = dspFlashAddrSwitch(1);  //Ä¬ÈÏ´Óflash·ÖÇø1Æô¶¯Ó¦ÓÃÈí¼ş
-		if(flashRet == RET_SUCCESS)  //ÇĞ»»FLASHµØÖ·¿éÕıÈ·£¬ÇĞ»»µ½ÕıÈ·µÄµØÖ·
-		{
-			UART_Print("switch DSP's flash successful\r\n");
-			//ÇĞ»»µ½Ä¿±êflashµØÖ·,ÓÃÓÚ¼ÓÔØFLASHÄÚÊı¾İ²¢Æô¶¯APP
-			flash_ptr=(unsigned int *)FLASH_STARTUP_ADDRS_APP;
-			for(i = 0;i < APP_FLASH_LEN;i+=4){
-				*(unsigned int *)(DDR_TEMP_ADDRS_CODE + i) = *(unsigned int *)(FLASH_STARTUP_ADDRS_APP + i);
-			}
-		}
-		else  //ÇĞ»»µØÖ·Ê§°Ü£¬²»Æô¶¯ÈÎºÎAPP
-		{
-			UART_Print("switch DSP's flash failed,please check fmql\r\n");
-		}
-	}
-	else
-	{
-		;
-	}
-
-	/* Ã¿¸öºËÇå¿Õ×Ô¼ºÏµÍ³ÔËĞĞµÄDDR¿Õ¼ä0x80000000~0x80FFFFFF£¬¶ÔÓ¦ÎïÀíµØÖ·¿Õ¼ä0x80000000~0x87FFFFFF */
-	for(i=0;i<0x1000000;i+=4){
-		*(unsigned int*)(0x80000000 + i) = 0;
-	}
-	entryAddr = reload_dat_app(DDR_TEMP_ADDRS_CODE,DNUM);
-
-	/* Ö÷ºËÆô¶¯´ÓºË¿ªÊ¼ÔËĞĞBOOT */
-	if(DNUM == 0){
-		KICK0 = KICK0_UNLOCK;
-		KICK1 = KICK1_UNLOCK;
-		for(i=1;i<8;i++){
-			BOOT_MAGIC_ADDR(i) = (uint32_t)_c_int00;
-			IPCGR(i) |= 1;
-		}
-		KICK0 = KICK_LOCK;
-		KICK1 = KICK_LOCK;
-
-		CACHE_enableCaching(128);
-		CACHE_enableCaching(129);
-		CACHE_enableCaching(130);
-		CACHE_enableCaching(131);
-		CACHE_enableCaching(132);
-		CACHE_enableCaching(133);
-		CACHE_enableCaching(134);
-		CACHE_enableCaching(135);
-		for(i=0;i<1000000;i++);
-	}
-
-	/* Ö÷ºËÔÚÕâÀïĞ´Í¬²½±êÖ¾ */
-	*(unsigned int*)(0xa3000020 + DNUM*4) = entryAddr;
-	/* ´ÓºËµÈ´ıÖ÷ºËÍê³ÉÓ¦ÓÃ°áÔË */
-	if(DNUM > 0){
-		while(*(unsigned int*)(0xa3000020)!= entryAddr);
-		for(j=0;j<20000000+1000000*(DNUM-1);j++);
-		bspPrintf("%d ",DNUM,2,3,4,5,6);
-		if(DNUM == 7){
-			UART_Print("\r\n");
-		}
-	}
-
-	/* ËùÓĞºËÌø×ªµ½Ó¦ÓÃÈë¿Ú */
-   *(unsigned int *)BOOT_MAGIC_ADDR(DNUM)=entryAddr;
-	 exit = (void(*)())entryAddr;
-	 (*exit)();//Ìøµ½Ó¦ÓÃ³ÌĞòÈë¿Ú
-
-}
 
 void set_MPAX()
 {
-	    CSL_XMC_XMPAXH 		mpaxh;		// ´æ´¢±£»¤ºÍµØÖ·À©Õ¹¼Ä´æÆ÷(H)
-	    CSL_XMC_XMPAXL 		mpaxl;		// ´æ´¢±£»¤ºÍµØÖ·À©Õ¹¼Ä´æÆ÷(L)
+	    CSL_XMC_XMPAXH 		mpaxh;		// å­˜å‚¨ä¿æŠ¤å’Œåœ°å€æ‰©å±•å¯„å­˜å™¨(H)
+	    CSL_XMC_XMPAXL 		mpaxl;		// å­˜å‚¨ä¿æŠ¤å’Œåœ°å€æ‰©å±•å¯„å­˜å™¨(L)
 
 	    int index = 5;
-	    mpaxh.bAddr   = 0x80000;	// »ùµØÖ·(Æ¥ÅäÂß¼­µØÖ·µÄ¸ßÎ»µØÖ·)
+	    mpaxh.bAddr   = 0x80000;	// åŸºåœ°å€(åŒ¹é…é€»è¾‘åœ°å€çš„é«˜ä½åœ°å€)
 	    mpaxh.segSize = 0x17;			// 16MB
 
-	    // ÉèÖÃXMPAXH¼Ä´æÆ÷. Writes:XMC_XMPAXH_SEGSZ,XMC_XMPAXH_BADDR.
+	    // è®¾ç½®XMPAXHå¯„å­˜å™¨. Writes:XMC_XMPAXH_SEGSZ,XMC_XMPAXH_BADDR.
 	    CSL_XMC_setXMPAXH (index, &mpaxh);
 
-	    // ÉèÖÃ¸ÃÇø¶ÎµØÖ·µÄ·ÃÎÊÈ¨ÏŞ
+	    // è®¾ç½®è¯¥åŒºæ®µåœ°å€çš„è®¿é—®æƒé™
 	    mpaxl.ux = 1;
 	    mpaxl.uw = 1;
 	    mpaxl.ur = 1;
@@ -324,7 +240,7 @@ void set_MPAX()
 	    mpaxl.sr = 1;
 	    mpaxl.rAddr = 0x800000 + DNUM*0x1000;
 
-	    // ÉèÖÃXMPAXL¼Ä´æÆ÷.
+	    // è®¾ç½®XMPAXLå¯„å­˜å™¨.
 	    CSL_XMC_setXMPAXL (index, &mpaxl);
 }
 /*
@@ -338,10 +254,11 @@ void set_MPAX()
 int main(void)
 {
 	unsigned int ret = 1;
-	int jjj;
+	int abort = 0;;
+	char ch;
 
-	//Ö÷Æµ
-	if(DNUM == 0)    		//ºË0
+	//ä¸»é¢‘
+	if(DNUM == 0)    		//æ ¸0
 	{
 		cah1=0x0;
 		cah2=0x0;
@@ -358,19 +275,29 @@ int main(void)
 		CACHE_setL1DSize(CACHE_L1_0KCACHE);
 		CACHE_setL2Size(CACHE_0KCACHE);
 
-		/* ÅäÖÃÖ÷Æµ */
+		/* é…ç½®ä¸»é¢‘ */
 		// MainPLL(32,1,1,1);    //FOUTPOSTDIV=800MHz
 		MainPLL(40,1,1,1);      //FOUTPOSTDIV=1GHz
 
-		/* ¹Ø±ÕSRIOÊ±ÖÓ */
+		/* å…³é—­SRIOæ—¶é’Ÿ */
 		PSC_Close_Clk("SRIO0");
 		PSC_Close_Clk("SRIO1");
 		CSL_tscEnable();
 
-		/* Çı¶¯³õÊ¼»¯ */
+		/* é©±åŠ¨åˆå§‹åŒ– */
 		usr_dev_init();
 
-		Start_Boot();
+		abort = abortboot();
+		if(abort == 0){
+			autoboot(1);
+		}
+		else{
+			usrBanner();
+			while(1){
+				polling_uart_cmd();
+			}
+		}
+		
 
 	}
 	else
@@ -380,7 +307,7 @@ int main(void)
 
 		set_MPAX();
 
-		Start_Boot();
+		autoboot();
 	}
 	while(1);
 

@@ -28,39 +28,39 @@ static void spiDelay(unsigned int count)
 		asm("	nop");
 }
 /***************************************************************************
-º¯ÊýÃû³Æ£ºUINT32 isSpiRecvFifoEmpty(UINT32 dev)
-º¯Êý¹¦ÄÜ£ºÅÐ¶Ï½ÓÊÕFIFOÊÇ·ñÎª¿Õ
-ÊäÈë±äÁ¿£ºUINT32 dev:SPIÉè±¸ºÅ
-Êä³ö±äÁ¿£ºÎÞ
-·µ»ØÖµ£º0-·Ç¿Õ£¬1-¿Õ
-Ô¼ÊøÌõ¼þ£ºÎÞ
+å‡½æ•°åç§°ï¼šUINT32 isSpiRecvFifoEmpty(UINT32 dev)
+å‡½æ•°åŠŸèƒ½ï¼šåˆ¤æ–­æŽ¥æ”¶FIFOæ˜¯å¦ä¸ºç©º
+è¾“å…¥å˜é‡ï¼šUINT32 dev:SPIè®¾å¤‡å·
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›žå€¼ï¼š0-éžç©ºï¼Œ1-ç©º
+çº¦æŸæ¡ä»¶ï¼šæ— 
 *****************************************************************************/
 static UINT32 isSpiRecvFifoEmpty(UINT32 dev)
 {
 	return (1<<9) != (SPI_EVENT & (1<<9));
 }
 /***************************************************************************
-º¯ÊýÃû³Æ£ºUINT32 waitSpiSendComplete(UINT32 dev)
-º¯Êý¹¦ÄÜ£ºµÈ´ýSPI·¢ËÍÍê³É
-ÊäÈë±äÁ¿£ºUINT32 dev:SPIÉè±¸ºÅ
-Êä³ö±äÁ¿£ºÎÞ
-·µ»ØÖµ£º0-·ÇÂú£¬1-Âú
-Ô¼ÊøÌõ¼þ£ºÎÞ
+å‡½æ•°åç§°ï¼šUINT32 waitSpiSendComplete(UINT32 dev)
+å‡½æ•°åŠŸèƒ½ï¼šç­‰å¾…SPIå‘é€å®Œæˆ
+è¾“å…¥å˜é‡ï¼šUINT32 dev:SPIè®¾å¤‡å·
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›žå€¼ï¼š0-éžæ»¡ï¼Œ1-æ»¡
+çº¦æŸæ¡ä»¶ï¼šæ— 
 *****************************************************************************/
 static UINT32 waitSpiSendComplete(UINT32 dev)
 {
-	SPI_COMMAND = 0xffffffff;   //LSTÖÃ1
-	while( !(0x00004000 == (SPI_EVENT & (1<<14)))){}; //LTÊÇ·ñÎª1
-	SPI_EVENT |= (1<<14); //Çå³ý¶ÔÓ¦ÊÂ¼þ±êÖ¾
+	SPI_COMMAND = 0xffffffff;   //LSTç½®1
+	while( !(0x00004000 == (SPI_EVENT & (1<<14)))){}; //LTæ˜¯å¦ä¸º1
+	SPI_EVENT |= (1<<14); //æ¸…é™¤å¯¹åº”äº‹ä»¶æ ‡å¿—
 }
 /***************************************************************************
-º¯ÊýÃû³Æ£ºstatic INT32 spiMasterInit(UINT32 dev)
-º¯Êý¹¦ÄÜ£ºSPI Ö÷Ä£Ê½³õÊ¼»¯º¯Êý
-ÊäÈë±äÁ¿£ºUINT32 dev:SPIÉè±¸ºÅ
-Êä³ö±äÁ¿£ºÎÞ
-·µ»ØÖµ£ºRET_SUCCESS-³É¹¦
-       RET_RARAM1_ERROR-²ÎÊý´íÎó
-Ô¼ÊøÌõ¼þ£ºÎÞ
+å‡½æ•°åç§°ï¼šstatic INT32 spiMasterInit(UINT32 dev)
+å‡½æ•°åŠŸèƒ½ï¼šSPI ä¸»æ¨¡å¼åˆå§‹åŒ–å‡½æ•°
+è¾“å…¥å˜é‡ï¼šUINT32 dev:SPIè®¾å¤‡å·
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›žå€¼ï¼šRET_SUCCESS-æˆåŠŸ
+       RET_RARAM1_ERROR-å‚æ•°é”™è¯¯
+çº¦æŸæ¡ä»¶ï¼šæ— 
 *****************************************************************************/
 static INT32 spiMasterInit(UINT32 dev)
 {
@@ -70,7 +70,7 @@ static INT32 spiMasterInit(UINT32 dev)
 //	PARAMETER_ASSERT((dev < SPI_DEV_NUM),RET_RARAM1_ERROR);
 	
 	pSpiMode = &gSpiDevModeConfig[dev];
-	SPI_MODE &= ~(1<<24);/*Ê¹ÄÜ¹Ø±Õ*/
+	SPI_MODE &= ~(1<<24);/*ä½¿èƒ½å…³é—­*/
 	
 	temp |= (pSpiMode->loop & 1) << 30;
 	temp |= (pSpiMode->cpol & 1) << 29;
@@ -84,13 +84,13 @@ static INT32 spiMasterInit(UINT32 dev)
 	return RET_SUCCESS;
 }
 /***************************************************************************
-º¯ÊýÃû³Æ£ºvoid spiSlaveSelectEnable(UINT32 spiConfigAddr,UINT32 cs_bit)
-º¯Êý¹¦ÄÜ£ºSPIÊÖ¶¯Æ¬Ñ¡Ê¹ÄÜ
-ÊäÈë±äÁ¿£ºUINT32 dev£ºSPIÉè±¸ºÅ
-        UINT32 cs_bit£ºÆ¬Ñ¡Í¨µÀ
-Êä³ö±äÁ¿£ºÎÞ
-·µ»ØÖµ£ºÎÞ
-Ô¼ÊøÌõ¼þ£ºÎÞ
+å‡½æ•°åç§°ï¼švoid spiSlaveSelectEnable(UINT32 spiConfigAddr,UINT32 cs_bit)
+å‡½æ•°åŠŸèƒ½ï¼šSPIæ‰‹åŠ¨ç‰‡é€‰ä½¿èƒ½
+è¾“å…¥å˜é‡ï¼šUINT32 devï¼šSPIè®¾å¤‡å·
+        UINT32 cs_bitï¼šç‰‡é€‰é€šé“
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›žå€¼ï¼šæ— 
+çº¦æŸæ¡ä»¶ï¼šæ— 
 *****************************************************************************/
 static void spiSlaveSelectEnable(UINT32 dev,UINT32 cs_bit)
 {
@@ -101,24 +101,24 @@ static void spiSlaveSelectEnable(UINT32 dev,UINT32 cs_bit)
 	}
 }
 /***************************************************************************
-º¯ÊýÃû³Æ£ºvoid spiSlaveSelectDisable(UINT32 dev)
-º¯Êý¹¦ÄÜ£ºSPIÊÖ¶¯Æ¬Ñ¡È¥Ê¹ÄÜ
-ÊäÈë±äÁ¿£ºUINT32 dev£ºSPIÉè±¸ºÅ
-Êä³ö±äÁ¿£ºÎÞ
-·µ»ØÖµ£ºÎÞ
-Ô¼ÊøÌõ¼þ£ºÎÞ
+å‡½æ•°åç§°ï¼švoid spiSlaveSelectDisable(UINT32 dev)
+å‡½æ•°åŠŸèƒ½ï¼šSPIæ‰‹åŠ¨ç‰‡é€‰åŽ»ä½¿èƒ½
+è¾“å…¥å˜é‡ï¼šUINT32 devï¼šSPIè®¾å¤‡å·
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›žå€¼ï¼šæ— 
+çº¦æŸæ¡ä»¶ï¼šæ— 
 *****************************************************************************/
 static void spiSlaveSelectDisable(UINT32 dev)
 {
 	SPI_SLVSEL = 0x3;
 }
 /***************************************************************************
-º¯ÊýÃû³Æ£ºvoid spiClearRecvFifo(UINT32 dev)
-º¯Êý¹¦ÄÜ£ºSPI½ÓÊÕFIFO¸´Î»
-ÊäÈë±äÁ¿£ºUINT32 dev£ºSPIÉè±¸ºÅ
-Êä³ö±äÁ¿£ºÎÞ
-·µ»ØÖµ£ºÎÞ
-Ô¼ÊøÌõ¼þ£ºÎÞ
+å‡½æ•°åç§°ï¼švoid spiClearRecvFifo(UINT32 dev)
+å‡½æ•°åŠŸèƒ½ï¼šSPIæŽ¥æ”¶FIFOå¤ä½
+è¾“å…¥å˜é‡ï¼šUINT32 devï¼šSPIè®¾å¤‡å·
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›žå€¼ï¼šæ— 
+çº¦æŸæ¡ä»¶ï¼šæ— 
 *****************************************************************************/
 static void spiClearRecvFifo(UINT32 dev)
 {
@@ -130,20 +130,20 @@ static void spiClearRecvFifo(UINT32 dev)
 	}
 }
 /***************************************************************************
-º¯ÊýÃû³Æ£ºINT32 spiTransfer(UINT32 spiConfigAddr,UINT32 cs,UINT8 *wrData,UINT32 wrLen,UINT8 *rdData,UINT32 rdLen)
-º¯Êý¹¦ÄÜ£ºSPI´«Êäº¯Êý
-ÊäÈë±äÁ¿£ºspiConfigAddr£ºSPI¿ØÖÆÆ÷µØÖ·
-          cs£º´Ó»úÆ¬Ñ¡
-          wrData£º´ý·¢ËÍÊý¾Ý´æ·ÅµØÖ·
-          wrLen£º´ý·¢ËÍÊý¾Ý³¤¶È
-          rdLen£º´ý¶ÁÈ¡Êý¾Ý³¤¶È
-Êä³ö±äÁ¿£ºrdData£º¶ÁÈ¡Êý¾Ý´æ·ÅµØÖ·
-·µ»ØÖµ£ºRET_SUCCESS£º²Ù×÷Íê³É
-        RET_ERROR£º²Ù×÷Ê§°Ü
-        RET_RARAM3_ERROR£º´ý·¢ËÍÊý¾ÝµØÖ·Îª¿Õ
-        RET_RARAM4_ERROR£º·¢ËÍºÍ¶ÁÈ¡Êý¾Ý³¤¶ÈÖ®ºÍ´óÓÚSPI FIFOÉî¶È
-        RET_RARAM5_ERROR£º¶ÁÈ¡Êý¾Ý´æ·ÅµØÖ·Îª¿Õ
-Ô¼ÊøÌõ¼þ£ºÎÞ
+å‡½æ•°åç§°ï¼šINT32 spiTransfer(UINT32 spiConfigAddr,UINT32 cs,UINT8 *wrData,UINT32 wrLen,UINT8 *rdData,UINT32 rdLen)
+å‡½æ•°åŠŸèƒ½ï¼šSPIä¼ è¾“å‡½æ•°
+è¾“å…¥å˜é‡ï¼šspiConfigAddrï¼šSPIæŽ§åˆ¶å™¨åœ°å€
+          csï¼šä»Žæœºç‰‡é€‰
+          wrDataï¼šå¾…å‘é€æ•°æ®å­˜æ”¾åœ°å€
+          wrLenï¼šå¾…å‘é€æ•°æ®é•¿åº¦
+          rdLenï¼šå¾…è¯»å–æ•°æ®é•¿åº¦
+è¾“å‡ºå˜é‡ï¼šrdDataï¼šè¯»å–æ•°æ®å­˜æ”¾åœ°å€
+è¿”å›žå€¼ï¼šRET_SUCCESSï¼šæ“ä½œå®Œæˆ
+        RET_ERRORï¼šæ“ä½œå¤±è´¥
+        RET_RARAM3_ERRORï¼šå¾…å‘é€æ•°æ®åœ°å€ä¸ºç©º
+        RET_RARAM4_ERRORï¼šå‘é€å’Œè¯»å–æ•°æ®é•¿åº¦ä¹‹å’Œå¤§äºŽSPI FIFOæ·±åº¦
+        RET_RARAM5_ERRORï¼šè¯»å–æ•°æ®å­˜æ”¾åœ°å€ä¸ºç©º
+çº¦æŸæ¡ä»¶ï¼šæ— 
 *****************************************************************************/
 INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT32 wrLen,UINT8 *rdData,UINT32 rdLen)
 {
@@ -192,13 +192,13 @@ INT32 spiTransfer(UINT32 dev,UINT32 cs,UINT8 *wrData,UINT32 wrLen,UINT8 *rdData,
     return RET_SUCCESS;
 }
 /***********************************************************************************
- * º¯ÊýÃû³Æ£ºINT32 bspSpiInit(UINT32 dev)
- * º¯Êý¹¦ÄÜ£ºSPI¿ØÖÆÆ÷³õÊ¼»¯
- * ÊäÈë±äÁ¿£ºUINT32 dev ¿ØÖÆÆ÷ºÅ
- * Êä³ö±äÁ¿£ºÎÞ
- * ·µ»ØÖµ£º    RET_SUCCESS ¨C ³É¹¦
- *			RET_ERROR ¨C Ê§°Ü
- * Ô¼ÊøÌõ¼þ£ºÊÊÓÃÓÚ±¾½ÚµãÎªSPI MasterµÄÇé¿ö£¬²»Ö§³Ö¶àÏß³Ì²¢·¢µ÷ÓÃ
+ * å‡½æ•°åç§°ï¼šINT32 bspSpiInit(UINT32 dev)
+ * å‡½æ•°åŠŸèƒ½ï¼šSPIæŽ§åˆ¶å™¨åˆå§‹åŒ–
+ * è¾“å…¥å˜é‡ï¼šUINT32 dev æŽ§åˆ¶å™¨å·
+ * è¾“å‡ºå˜é‡ï¼šæ— 
+ * è¿”å›žå€¼ï¼š    RET_SUCCESS â€“ æˆåŠŸ
+ *			RET_ERROR â€“ å¤±è´¥
+ * çº¦æŸæ¡ä»¶ï¼šé€‚ç”¨äºŽæœ¬èŠ‚ç‚¹ä¸ºSPI Masterçš„æƒ…å†µï¼Œä¸æ”¯æŒå¤šçº¿ç¨‹å¹¶å‘è°ƒç”¨
  ***********************************************************************************/
 INT32 bspSpiInit(UINT32 dev)
 {

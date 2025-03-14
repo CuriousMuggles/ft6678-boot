@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include "bspInterface.h"
 #include "flash.h"
 #include "flash_nor.h"
 
-#define SWAP32(x)	(((x) >> 24 & 0xff) | ((x) >> 8 & 0xff00) | ((x) << 8 & 0xff0000) | ((x) << 24 & 0xff000000))
 NOR_InfoObj gNorInfo =
 {
 	CSL_EMIF16_data_REGS,/*flashBase;                     */
@@ -12,200 +12,109 @@ NOR_InfoObj gNorInfo =
 	FLASH_BUS_WIDTH_2_BYTES/*maxTotalWidth;              */
 };
 
-#define LINELENGTH (100)
-#define MAX_FILEINFO_NUMBER	(10)
-typedef struct{
-	char 	filename[50];
-	int 	flashblock;
-	int 	filetype;	/*0=dspÎÄ¼þ£¬1=fpga1ÎÄ¼þ,2=fpga2ÎÄ¼þ£¬3=fpga3ÎÄ¼þ*/
-	char 	finishflag;
-}FILE_INFO;
-FILE_INFO gFileInfo[MAX_FILEINFO_NUMBER] = {0};
-unsigned int gFileInfoNumber=0;
-
-void dspFlashProgram(int length)
+/*****************************************************************/
+/*å‡½æ•°ï¼šINT32 dspFlashWrite(UINT32 offset,UINT8 *pBuf,UINT32 bufLen);
+ *åŠŸèƒ½ï¼šDSP flashçƒ§å†™å‡½æ•°ï¼ˆå°†å­˜å‚¨äºŽpBuf,é•¿åº¦ä¸ºbufLençš„DSPæ–‡ä»¶å†™å…¥FLASHä¸­åç§»ä¸ºoffsetçš„å­˜å‚¨åŒºï¼‰
+ *è¾“å…¥ï¼š
+ *	   offset:flashåç§»åœ°å€
+ *     pBuf ï¼šå¾…å†™å…¥äºŒè¿›åˆ¶æ–‡ä»¶é¦–åœ°å€
+ *     bufLenï¼šå¾…å†™æ•°æ®é•¿åº¦
+ *
+ *
+ *è¿”å›žå€¼ï¼š0-----çƒ§å†™æˆåŠŸ
+ *	   -1-----æ£€éªŒå¤±è´¥
+ *     -2----æ“¦FLASHå¤±è´¥
+ *     -3----å†™FLASHå¤±è´¥
+ *     RET_RARAM1_ERROR----å‚æ•°é”™è¯¯
+ *
+ */
+INT32 dspFlashWrite(UINT32 offset,UINT8 *pBuf,UINT32 bufLen)
 {
-	unsigned int base_addr = 0xc000000;
-    unsigned int Data_Tmp,temp,program_addr;
-    unsigned int i,j;
-    unsigned int read_data;
-    unsigned int flash_program_addr = 0x70000000;
+	INT32 tempRes=0;
+	UINT32 flashAddr =0;
+	INT32 flashBlkRet=0,blockNo=0;
 
-    unsigned int write_cnt;
-    unsigned int num_bytes = 0x2000;
+	bufLen += (bufLen & 1);
+	PARAMETER_ASSERT(((offset&1) == 0),return RET_RARAM1_ERROR);
+	PARAMETER_ASSERT(((offset + bufLen) <= 0x10000000),return RET_RARAM1_ERROR);
+	PARAMETER_ASSERT((pBuf != NULL),return RET_RARAM1_ERROR);
 
-    NOR_erase( &gNorInfo, flash_program_addr, length );
-    NOR_writeBytes(&gNorInfo,flash_program_addr, length, base_addr);
-#if 0
-  	write_cnt = length/num_bytes;
-  	write_cnt ++;
-  	for(i = 0;i < write_cnt;i++)
-  	{
-  		NOR_writeBytes(&gNorInfo,flash_program_addr + i*num_bytes, num_bytes, base_addr + i*num_bytes);
-  	}
-#endif
-}
-int dspRegister(FILE_INFO *pfileinfo)
-{
-	char filename[LINELENGTH];
-	FILE *file;
-	int i = 0,ret = 0;
-	unsigned int sr[4] = {0};
+	blockNo = offset >> 23 & 0x1f;
+	flashAddr = (offset & 0x7FFFFF) + CSL_EMIF16_data_REGS;
+	// DPRINTF("offset = 0x%08x,blockNo = 0x%x,bufLen = 0x%x,flashAddr = 0x%08x\n",
+	// 			offset,blockNo,bufLen,flashAddr);
 
-	/*´ò¿ªÒªÉÕÐ´µÄÎÄ¼þ*/
-	sprintf(filename,"%s%s","C:\\ft6678_program_tool\\",pfileinfo->filename);
-	file = fopen(filename,"rb");
-	if(!file){
-		printf("Can't Open file ""%s""!\n",filename);
-		return -1;
-	}
-	printf("Load file \"%s\"...\n",filename);
-	for(i=0;i<4;i++){
-		fscanf(file,"%x",&(sr[i]));
-		sr[i] = SWAP32(sr[i]);
-		printf("%x ",sr[i]);
-	}
-	printf(" done\n");
-	/*ÇÐ»»flashµØÖ·Ïß*/
-	ret = dspFlashAddrSwitch(pfileinfo->flashblock);
-	if(ret != pfileinfo->flashblock){
-		printf("dspFlashAddrSwitch %d fail,ret = %d\n",pfileinfo->flashblock,ret);
-		return -1;
-	}
-	else{
-		printf("dspFlashAddrSwitch %d success!\n",pfileinfo->flashblock);
-	}
-	/*ÉÕÐ´ÎÄ¼þ*/
-    NOR_erase( &gNorInfo, 0x70300000, 16 );
-    NOR_writeBytes(&gNorInfo,0x70300000, 16, (unsigned int)sr);
-	printf("%s program success!\n\n\n",pfileinfo->filename);
-	pfileinfo->finishflag = 1;
-
-	return 0;
-}
-int dspProgram(FILE_INFO *pfileinfo)
-{
-	char string[LINELENGTH],filename[LINELENGTH];
-	unsigned int DataHead[6];
-	unsigned int *pbuffer,memaddr=0xc000000;
-	int filelength=0;
-	int i,j,k,ret;
-	FILE *file;
-
-	/*½âÎöÉÕÐ´ÎÄ¼þ¸ñÊ½*/
-	sscanf(pfileinfo->filename,"%*[^.].%s",string);
-	/*´ò¿ªÒªÉÕÐ´µÄÎÄ¼þ*/
-	sprintf(filename,"%s%s","C:\\ft6678_program_tool\\",pfileinfo->filename);
-	file = fopen(filename,"rb");
-	if(!file){
-		printf("Can't Open file ""%s""!\n",filename);
-		return -1;
-	}
-	printf("Load file \"%s\"...\n",filename);
-	/*½«ÉÕÐ´ÎÄ¼þ¶ÁÈ¡µ½ÄÚ´æÖÐ*/
-	if(strcmp(string,"dat") == 0){
-		/*¶ÁÈ¡Êý¾ÝÍ·£¬»ñÈ¡ÉÕÐ´³¤¶È*/
-		for(j=0;j<6;j++)
-		{
-			fscanf(file,"%x",&DataHead[j]);
-		}
-		pbuffer = (unsigned int*)memaddr;
-		for(j=0;j<DataHead[4];j++){
-			fscanf(file,"%x",pbuffer);
-			pbuffer++;
-			/*´òÓ¡½ø¶ÈÌõ*/
-			for(k=0;k<10;k++)
-			{
-				if(j==DataHead[4]/10*k)
-				{
-					printf("%d0%%\n",k);
-				}
-			}
-		}
-		filelength = DataHead[4]*4;
-		fclose(file);
-	}
-	else if(strcmp(string,"bin") == 0){
-		fseek(file,0,SEEK_END);
-		filelength = ftell(file);
-		fseek(file,0,SEEK_SET);
-		fread((void*)memaddr,sizeof(char),filelength,file);
-		fclose(file);
-	}
-	else{
-		;
-	}
-
-	printf("done,size is %d Byte!\n",filelength);
-	for(i=0;i<gFileInfoNumber;i++){
-		if(strcmp(pfileinfo->filename,gFileInfo[i].filename) == 0){
-			/*ÇÐ»»flashµØÖ·Ïß*/
-			ret = dspFlashAddrSwitch(gFileInfo[i].flashblock);
-			if(ret != gFileInfo[i].flashblock){
-				printf("dspFlashAddrSwitch %d fail,ret = %d\n",gFileInfo[i].flashblock,ret);
-				return -1;
-			}
-			else{
-				printf("dspFlashAddrSwitch %d success!\n",gFileInfo[i].flashblock);
-			}
-			/*ÉÕÐ´ÎÄ¼þ*/
-			dspFlashProgram(filelength);
-			printf("%s program success!\n\n\n",gFileInfo[i].filename);
-			gFileInfo[i].finishflag = 1;
-		}
-	}
-
-}
-
-int flashUtil(void)
-{
-	char *fileListText="C:\\ft6678_program_tool\\ProgramFileList.txt";
-	char string[LINELENGTH];
-	FILE *file;
-	int i,ret;
-
-	file = fopen(fileListText,"rb");
-	if(!file){
-		printf("Can't Open file \"C:\\ft6678_program_tool\\ProgramFileList.txt\"!\n");
-		return -1;
-	}
-	/*¶ÁÈ¡ÒªÉÕÐ´ÎÄ¼þÐÅÏ¢*/
-	while(gFileInfoNumber<MAX_FILEINFO_NUMBER){
-		fgets(string,LINELENGTH,file);
-		/*Ê××Ö·ûÎª#£¬±íÊ¾ÎÄ¼þÌø¹ý²»ÉÕÐ´*/
-		if(string[0] == '#'){
-			continue;
-		}
-		/*Ê××Ö·ûÎª=£¬±íÊ¾ÉÕÐ´ÎÄ¼þ¶ÁÈ¡½áÊø*/
-		else if(string[0] == '='){
-			break;
-		}
-		/*½âÎöÎÄ¼þÃûºÍÉÕÐ´¿éºÅ*/
-		else{
-			ret = sscanf(string,"%d:%d:%s",&gFileInfo[gFileInfoNumber].filetype,&gFileInfo[gFileInfoNumber].flashblock,gFileInfo[gFileInfoNumber].filename);
-			if(ret == 3){
-				gFileInfoNumber++;
-				printf(">>%s",string);
-			}
-			else{
-				printf("%s parse errors,please check file ProgramFileList.txt format is %%d:%%d:%%s\n",string);
-			}
-		}
-	}
-	fclose(file);
-
-	for(i=0;i<gFileInfoNumber;i++)
+	/*åˆ‡æ¢DSPå¯¹åº”çš„FLASHåœ°å€,ç”¨äºŽä»£ç çš„çƒ§å†™æ‰§è¡Œ,åŽç»­åˆ‡æ¢å°†DSPå¯¹åº”çš„FLASHå—å·åˆ‡æ¢å›žæ¥åˆ‡æ¢å›žæ¥*/
+	flashBlkRet = dspFlashAddrSwitch(blockNo);
+	if(flashBlkRet !=RET_SUCCESS)
 	{
-		if(gFileInfo[i].finishflag == 1){
-			continue;
-		}
-		switch(gFileInfo[i].filetype){
-			case 0:{dspProgram(&gFileInfo[i]);break;}
-			case 1:{break;}
-			case 2:{break;}
-			case 3:{break;}
-			case 4:{dspRegister(&gFileInfo[i]);break;}
-			default:break;
-		}
+		printfk("DSP_FLASH switch err,please check return =%d\n",flashBlkRet);
+		return -1;
 	}
+
+	/*æ“¦é™¤å­—èŠ‚é•¿åº¦bufLen å¯¹åº”çš„FLASHå—å¤§å°ç©ºé—´*/
+	tempRes = NOR_erase( &gNorInfo, flashAddr, bufLen );
+	if(tempRes !=E_PASS)
+	{
+		printfk("dspFlashWrite erase failed\r\n");
+		return -2;  //flashæ“¦é™¤å¤±è´¥
+	}
+	/*çƒ§å†™æ–‡ä»¶*/
+	tempRes = NOR_writeBytes(&gNorInfo,flashAddr, bufLen, (UINT32)pBuf);
+	if(tempRes !=E_PASS)
+	{
+		printfk("dspFlashWrite program failed\r\n");
+		return -3;  //flashå†™å…¥æ•°æ®å¤±è´¥
+	}
+
+	dspFlashAddrSwitch(0);
+}
+
+/*****************************************************************/
+/*å‡½æ•°ï¼šINT32 dspFlashRead(UINT32 offset,UINT8 *pBuf,UINT32 bufLen);
+ *åŠŸèƒ½ï¼šDSP flashè¯»å–å‡½æ•°ï¼ˆå°†å­˜å‚¨äºŽFLASHä¸­åç§»ä¸ºoffset,é•¿åº¦ä¸ºbufLençš„æ•°æ®å­˜å‚¨äºŽ pBufä¸­ï¼‰
+ *è¾“å…¥ï¼š
+*	   offset:flashåç§»åœ°å€
+ *     pBuf ï¼šå¾…å†™å…¥äºŒè¿›åˆ¶æ–‡ä»¶é¦–åœ°å€
+ *     bufLenï¼šå¾…å†™æ•°æ®é•¿åº¦
+ *
+ *
+ *è¿”å›žå€¼ï¼š0-----è¯»å–æˆåŠŸ
+ *	   -1-----æ£€éªŒå¤±è´¥
+ *	   RET_RARAM1_ERROR----å‚æ•°é”™è¯¯
+ *
+ */
+INT32 dspFlashRead(UINT32 offset,UINT8 *pBuf,UINT32 bufLen)
+{
+	UINT32 flashAddr=0;
+	INT32 flashBlkRet=0,blockNo=0;
+	INT32 i,loopcnt;
+
+	PARAMETER_ASSERT(((offset&1) == 0),return RET_RARAM1_ERROR);
+	PARAMETER_ASSERT(((offset + bufLen) <= 0x10000000),return RET_RARAM1_ERROR);
+	PARAMETER_ASSERT((pBuf != NULL),return RET_RARAM1_ERROR);
+
+	blockNo = offset >> 23 & 0x1f;
+	flashAddr = (offset & 0x7FFFFF) + CSL_EMIF16_data_REGS;
+
+//	DPRINTF("offset = 0x%08x,blockNo = 0x%x\n",offset,blockNo);
+	/*åˆ‡æ¢DSPå¯¹åº”çš„FLASHå—å·,ç”¨äºŽä»£ç çš„çƒ§å†™æ‰§è¡Œ,åŽç»­åˆ‡æ¢å°†DSPå¯¹åº”çš„FLASHå—å·åˆ‡æ¢å›žæ¥åˆ‡æ¢å›žæ¥*/
+	flashBlkRet =dspFlashAddrSwitch(blockNo);
+	if(flashBlkRet !=RET_SUCCESS)
+	{
+		dspFlashAddrSwitch(0);
+		printfk("DSP_FLASH switch err,please check return =%d\n",flashBlkRet);
+		return -1;
+	}
+
+	loopcnt = bufLen >> 1;
+	for(i=0;i<loopcnt;i++){
+		*(UINT16*)(pBuf + i*2) = *(UINT16*)(flashAddr + i*2);
+	}
+	if(bufLen & 1){
+		pBuf[bufLen-1] = (UINT8)(*(UINT16*)(flashAddr + loopcnt*2));
+	}
+
+	dspFlashAddrSwitch(0);
+	return 0;
 }

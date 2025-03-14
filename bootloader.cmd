@@ -43,7 +43,7 @@
 MEMORY
 {
 	MSMC_BOOTASM(RWX):org=0x0800000,len = 0x100
-    MSMC_BOOT (RWX) : org = 0x0802100, len = 0x1df00/*0xfe00*/
+    MSMC_BOOT (RWX) : org = 0x0802100, len = 0x2df00/*0xfe00*/
 	MSMC_BOOT_CINT(RWX):org=0x0800100,len=0x2000
 }
 

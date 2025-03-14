@@ -1,33 +1,31 @@
 
 /*******************************************************************************
-*ÎÄ¼şÃû£ºUART.h
-*×÷    ÓÃ£º ÓÃÓÚÉùÃ÷´®¿ÚÏà¹ØµÄ½Ó¿Úº¯ÊıºÍ¼Ä´æÆ÷ºê¶¨Òå¡£
-*°æ    ±¾£ºVersion 1.0  ´´½¨ÓÚ2018.05.08
+*æ–‡ä»¶åï¼šUART.h
+*ä½œ    ç”¨ï¼š ç”¨äºå£°æ˜ä¸²å£ç›¸å…³çš„æ¥å£å‡½æ•°å’Œå¯„å­˜å™¨å®å®šä¹‰ã€‚
+*ç‰ˆ    æœ¬ï¼šVersion 1.0  åˆ›å»ºäº2018.05.08
 *******************************************************************************/
 #ifndef UART_H_
 #define UART_H_
 
 #include "bspInterface.h"
 
-#define	DataReg          *(unsigned char*)0x02540000    //Êı¾İ¼Ä´æÆ÷ÀïµÄÖµ
-#define	ControlReg 	     *(unsigned int* )0x02540008    //¿ØÖÆ¼Ä´æÆ÷ÀïµÄÖµ
-#define	StatusReg 	     *(unsigned int* )0x02540004    //×´Ì¬¼Ä´æÆ÷ÀïµÄÖµ
-#define	ScalerReg	     *(unsigned int* )0x0254000c    //·ÖÆµ¼ÆÊı¼Ä´æÆ÷ÀïµÄÖµ
-#define	SartAddress	      (unsigned char*)0x0c00b000    //½ÓÊÕÊı¾İµÄÆğÊ¼µØÖ·
+#define	DataReg          *(unsigned char*)0x02540000    //æ•°æ®å¯„å­˜å™¨é‡Œçš„å€¼
+#define	ControlReg 	     *(unsigned int* )0x02540008    //æ§åˆ¶å¯„å­˜å™¨é‡Œçš„å€¼
+#define	StatusReg 	     *(unsigned int* )0x02540004    //çŠ¶æ€å¯„å­˜å™¨é‡Œçš„å€¼
+#define	ScalerReg	     *(unsigned int* )0x0254000c    //åˆ†é¢‘è®¡æ•°å¯„å­˜å™¨é‡Œçš„å€¼
 
-#define MAIN_PLL         1000000000                     //Ğ¾Æ¬¹¤×÷Ö÷Æµ
-#define BaudRate_Value   115200                         //UARTµÄ²¨ÌØÂÊ
+#define MAIN_PLL         1000000000                     //èŠ¯ç‰‡å·¥ä½œä¸»é¢‘
+#define BaudRate_Value   115200                         //UARTçš„æ³¢ç‰¹ç‡
 
-#define PSC_PTCMD        0x02350120                     //µçÔ´ÇøÓò×ª»»ÃüÁî¼Ä´æÆ÷
-#define PSC_MDCTL26      *(unsigned int*)0x02350a68     //Ä£¿é¿ØÖÆ¼Ä´æÆ÷
-#define PSC_MDSTAT26     *(unsigned int*)0x02350868     //Ä£¿é×´Ì¬¼Ä´æÆ÷
+#define PSC_PTCMD        0x02350120                     //ç”µæºåŒºåŸŸè½¬æ¢å‘½ä»¤å¯„å­˜å™¨
+#define PSC_MDCTL26      *(unsigned int*)0x02350a68     //æ¨¡å—æ§åˆ¶å¯„å­˜å™¨
+#define PSC_MDSTAT26     *(unsigned int*)0x02350868     //æ¨¡å—çŠ¶æ€å¯„å­˜å™¨
 
 #define STATUS_TF       (1<<9)
 #define UART_MAX_BUFLEN	(1024)
 
-extern INT32 bspUartSend(INT8 *pSendData,UINT32 sendLen,UINT32 wait);
-extern void  UART_Print(char *strFmt);
-extern void  UART_Config(unsigned int BaudRate);
-void bspPrintf(const char *strFmt,int data0,int data1,int data2,int data3,int data4,int data5);
-
+extern void  bspUartInit(unsigned int BaudRate);
+extern INT32 bspUartSend(const INT8 *pSendData,UINT32 sendLen,UINT32 wait);
+extern INT32 bspUartRecv(UINT8 *pRecvData,UINT32 recvLen,UINT32 wait);
+extern void bspUartPrintString(const char *strFmt);
 #endif /* UART_H_ */

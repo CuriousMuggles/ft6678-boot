@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "bspinterface.h": "c"
+        "bspinterface.h": "c",
+        "shell_cfg.h": "c"
     }
 }

@@ -4,19 +4,19 @@
 
 
 /***************************************************************************
-Í¨ÓÃºê¶¨Òå
+é€šç”¨å®å®šä¹‰
 *****************************************************************************/
-#define RET_SUCCESS         0   /*²Ù×÷³É¹¦*/
-#define RET_ERROR           -1  /*²Ù×÷Ê§°Ü*/
-#define RET_TIMEOUT         -2  /*²Ù×÷³¬Ê±´íÎó*/
-#define RET_BUSY            -3  /*µ±Ç°Éè±¸ÕıÃ¦*/
-#define RET_RARAM1_ERROR    -4  /*ÊäÈë²ÎÊı1´íÎó*/
-#define RET_RARAM2_ERROR    -5  /*ÊäÈë²ÎÊı2´íÎó*/
-#define RET_RARAM3_ERROR    -6  /*ÊäÈë²ÎÊı3´íÎó*/
-#define RET_RARAM4_ERROR    -7  /*ÊäÈë²ÎÊı4´íÎó*/
-#define RET_RARAM5_ERROR    -8  /*ÊäÈë²ÎÊı5´íÎó*/
-#define RET_RARAM6_ERROR    -9  /*ÊäÈë²ÎÊı6´íÎó*/
-#define RET_RARAM7_ERROR    -10 /*ÊäÈë²ÎÊı7´íÎó*/
+#define RET_SUCCESS         0   /*æ“ä½œæˆåŠŸ*/
+#define RET_ERROR           -1  /*æ“ä½œå¤±è´¥*/
+#define RET_TIMEOUT         -2  /*æ“ä½œè¶…æ—¶é”™è¯¯*/
+#define RET_BUSY            -3  /*å½“å‰è®¾å¤‡æ­£å¿™*/
+#define RET_RARAM1_ERROR    -4  /*è¾“å…¥å‚æ•°1é”™è¯¯*/
+#define RET_RARAM2_ERROR    -5  /*è¾“å…¥å‚æ•°2é”™è¯¯*/
+#define RET_RARAM3_ERROR    -6  /*è¾“å…¥å‚æ•°3é”™è¯¯*/
+#define RET_RARAM4_ERROR    -7  /*è¾“å…¥å‚æ•°4é”™è¯¯*/
+#define RET_RARAM5_ERROR    -8  /*è¾“å…¥å‚æ•°5é”™è¯¯*/
+#define RET_RARAM6_ERROR    -9  /*è¾“å…¥å‚æ•°6é”™è¯¯*/
+#define RET_RARAM7_ERROR    -10 /*è¾“å…¥å‚æ•°7é”™è¯¯*/
 
 typedef unsigned long long int 	UINT64;
 typedef long long int 			INT64;
@@ -28,8 +28,14 @@ typedef char					INT8;
 typedef unsigned char			UINT8;
 
 #define CHAR2BCD(x)			((((x)/10)<<4) | ((x)%10))
+
+#define PARAMETER_ASSERT(expr, action) \
+        if (!(expr)) { \
+            action; \
+        }
+
 /***************************************************************************
- È«¾Ö¼Ä´æÆ÷ºê¶¨Òå
+ å…¨å±€å¯„å­˜å™¨å®å®šä¹‰
 *****************************************************************************/
 #define	KICK0 	        *(unsigned int *)0x02620038
 #define	KICK1	        *(unsigned int *)0x0262003C
@@ -41,33 +47,33 @@ typedef unsigned char			UINT8;
 #define IPCGR(x)		    *(unsigned int *)(0x2620240 + (x)*4)
 
 /***************************************************************************
-ÓÃ»§ºê¶¨Òå
+ç”¨æˆ·å®å®šä¹‰
 *****************************************************************************/
 #define DSP_BOOT_VERSION	"02.00.00"
 
-#define FLASH_STARTUP_ADDRS_BOOT    (0x70000000)    /* BOOTÔÚFLASHÖĞµÄµØÖ· */
-#define FLASH_STARTUP_ADDRS_APP     (0x70000000)    /* APPÔÚFLASHÖĞµÄµØÖ· */
-#define DDR_TEMP_ADDRS_CODE         (0xA0000000)    /* APPÁÙÊ±¿½±´µØÖ· */
-#define APP_FLASH_LEN               (0x300000)      /* APPÁÙÊ±¿½±´³¤¶È */
+#define FLASH_STARTUP_ADDRS_BOOT    (0x70000000)    /* BOOTåœ¨FLASHä¸­çš„åœ°å€ */
+#define FLASH_STARTUP_ADDRS_APP     (0x70000000)    /* APPåœ¨FLASHä¸­çš„åœ°å€ */
+#define DDR_TEMP_ADDRS_CODE         (0xA0000000)    /* APPä¸´æ—¶æ‹·è´åœ°å€ */
+#define APP_FLASH_LEN               (0x300000)      /* APPä¸´æ—¶æ‹·è´é•¿åº¦ */
 /***************************************************************************
-Êı¾İÀàĞÍ¶¨Òå
+æ•°æ®ç±»å‹å®šä¹‰
 *****************************************************************************/
 typedef struct
 {
-    INT32 version1;         /*°æ±¾ºÅ1,0-9*/
-    INT32 version2;         /*°æ±¾ºÅ2,0-99*/
-    INT32 version3;         /*°æ±¾ºÅ3,0-99*/
-    INT32 version4;         /*°æ±¾ºÅ4,0-999*/
-    INT32 reserved[6];      /*Ô¤Áô£¨Ä¬ÈÏÌî0£©*/
-    INT32 year;             /*Éú³ÉÊ±¼ä-Äê·İ*/
-    INT32 month;            /*Éú³ÉÊ±¼ä-ÔÂ·İ£¨1-12£©*/
-    INT32 day;              /*Éú³ÉÊ±¼ä-ÈÕÆÚ£¨1-31£©*/
-    INT32 hour;             /*Éú³ÉÊ±¼ä-Ê±ÖÓ£¨0-23£©*/
-    INT32 minute;           /*Éú³ÉÊ±¼ä-·ÖÖÓ£¨0-59£©*/
-    INT32 second;           /*Éú³ÉÊ±¼ä-ÃëÖÓ£¨0-59£©*/
-} VERSION;/*°æ±¾ĞÅÏ¢½á¹¹Ìå*/
+    INT32 version1;         /*ç‰ˆæœ¬å·1,0-9*/
+    INT32 version2;         /*ç‰ˆæœ¬å·2,0-99*/
+    INT32 version3;         /*ç‰ˆæœ¬å·3,0-99*/
+    INT32 version4;         /*ç‰ˆæœ¬å·4,0-999*/
+    INT32 reserved[6];      /*é¢„ç•™ï¼ˆé»˜è®¤å¡«0ï¼‰*/
+    INT32 year;             /*ç”Ÿæˆæ—¶é—´-å¹´ä»½*/
+    INT32 month;            /*ç”Ÿæˆæ—¶é—´-æœˆä»½ï¼ˆ1-12ï¼‰*/
+    INT32 day;              /*ç”Ÿæˆæ—¶é—´-æ—¥æœŸï¼ˆ1-31ï¼‰*/
+    INT32 hour;             /*ç”Ÿæˆæ—¶é—´-æ—¶é’Ÿï¼ˆ0-23ï¼‰*/
+    INT32 minute;           /*ç”Ÿæˆæ—¶é—´-åˆ†é’Ÿï¼ˆ0-59ï¼‰*/
+    INT32 second;           /*ç”Ÿæˆæ—¶é—´-ç§’é’Ÿï¼ˆ0-59ï¼‰*/
+} VERSION;/*ç‰ˆæœ¬ä¿¡æ¯ç»“æ„ä½“*/
 /***************************************************************************
-È«¾Ö±äÁ¿ÉùÃ÷
+å…¨å±€å˜é‡å£°æ˜
 *****************************************************************************/
 extern void usleep(unsigned int n_us);
 extern void msleep(unsigned int n_ms);
@@ -76,6 +82,5 @@ extern void pll_wait(unsigned int i);
 extern UINT32 reload_dat_boot(UINT32 srcAddr,UINT32 coreNum);
 extern UINT32 reload_dat_app(UINT32 srcAddr,UINT32 coreNum);
 extern _c_int00(void);
-
-extern void bspPrintf(const char *strFmt,int data0,int data1,int data2,int data3,int data4,int data5);
+extern void printfk(const char *fmt, ...);
 #endif/*_BSPINTERFACE_H_*/

@@ -1,31 +1,31 @@
 /*******************************************************************************
-*ÎÄ¼şÃû£ºCORE_Memory_Test.c
-*×÷    ÓÃ£º ÓÃÓÚÊµÏÖFT-M6678´æ´¢Ìå²âÊÔµÄ½Ó¿Úº¯Êı,²Î¿¼ÁËDM6672VµÄ´úÂë
-*°æ    ±¾£ºVersion 1.0  ´´½¨ÓÚ2019.04.29
-*×¢    Òâ£º³ÌĞòÖĞ¿ÉÒÔÍ¨¹ıÉèÖÃ PRINT_DETAILSµÄÖµÀ´¿ª¹Ø´òÓ¡ĞÅÏ¢¡£
+*æ–‡ä»¶åï¼šCORE_Memory_Test.c
+*ä½œ    ç”¨ï¼š ç”¨äºå®ç°FT-M6678å­˜å‚¨ä½“æµ‹è¯•çš„æ¥å£å‡½æ•°,å‚è€ƒäº†DM6672Vçš„ä»£ç 
+*ç‰ˆ    æœ¬ï¼šVersion 1.0  åˆ›å»ºäº2019.04.29
+*æ³¨    æ„ï¼šç¨‹åºä¸­å¯ä»¥é€šè¿‡è®¾ç½® PRINT_DETAILSçš„å€¼æ¥å¼€å…³æ‰“å°ä¿¡æ¯ã€‚
 *******************************************************************************/
 #include <stdio.h>
 #include "CORE_Memory_Test.h"
 
-/*********************²âÊÔÑ¡ÔñÇøÓò*************************************************/
-#define  BIT_PATTERN_FILLING_TEST                     /* Êı¾İ²âÊÔ */
-#define  ADDRESS_TEST                                 /* µØÖ·²âÊÔ */
-#define  BIT_WALKING_TEST                             /* ×ßbit²âÊÔ*/
+/*********************æµ‹è¯•é€‰æ‹©åŒºåŸŸ*************************************************/
+#define  BIT_PATTERN_FILLING_TEST                     /* æ•°æ®æµ‹è¯• */
+#define  ADDRESS_TEST                                 /* åœ°å€æµ‹è¯• */
+#define  BIT_WALKING_TEST                             /* èµ°bitæµ‹è¯•*/
 
-#define  MAX_FILL_FAIL_COUNT 		(10)              /* Ìî³ä²âÊÔ´íÎó×î´óÖµÏŞÖÆ*/
-#define  MAX_ADDRESS_FAIL_COUNT 		(10)          /* µØÖ·²âÊÔ´íÎó×î´óÖµÏŞÖÆ*/
-#define  MAX_BITWALKING_FAIL_COUNT 	(2)               /* ×ßbit²âÊÔ´íÎó×î´óÖµÏŞÖÆ*/
-#define  MAX_BITWALKING_RANGE 		(1024*1024*1024)  /*×ßbit²âÊÔ×î´óÏŞÖÆ*/
+#define  MAX_FILL_FAIL_COUNT 		(10)              /* å¡«å……æµ‹è¯•é”™è¯¯æœ€å¤§å€¼é™åˆ¶*/
+#define  MAX_ADDRESS_FAIL_COUNT 		(10)          /* åœ°å€æµ‹è¯•é”™è¯¯æœ€å¤§å€¼é™åˆ¶*/
+#define  MAX_BITWALKING_FAIL_COUNT 	(2)               /* èµ°bitæµ‹è¯•é”™è¯¯æœ€å¤§å€¼é™åˆ¶*/
+#define  MAX_BITWALKING_RANGE 		(1024*1024*1024)  /*èµ°bitæµ‹è¯•æœ€å¤§é™åˆ¶*/
 
-/*Êµ¼ÊÊ¹ÓÃÊ±¿ÉÒÔ½«PRINT_DETAILSÉèÖÃÎª0£¬ÆÁ±Î´òÓ¡ĞÅÏ¢¡£*/
-#define  PRINT_DETAILS 	0                             /* ´òÓ¡µ÷ÊÔĞÅÏ¢Ñ¡Ôñ¿ª¹Ø*/
+/*å®é™…ä½¿ç”¨æ—¶å¯ä»¥å°†PRINT_DETAILSè®¾ç½®ä¸º0ï¼Œå±è”½æ‰“å°ä¿¡æ¯ã€‚*/
+#define  PRINT_DETAILS 	0                             /* æ‰“å°è°ƒè¯•ä¿¡æ¯é€‰æ‹©å¼€å…³*/
 #if      PRINT_DETAILS
 #define  PRINT	 		printf
 #else
 #define  PRINT			//
 #endif
 
-/* Ìî³ä²âÊÔÊ±Ê¹ÓÃµÄÊı¾İÔ´ */
+/* å¡«å……æµ‹è¯•æ—¶ä½¿ç”¨çš„æ•°æ®æº */
 unsigned long long ulDataPatternTable[] = { 
 	0x0000000000000000, 
 	0xffffffffffffffff, 
@@ -39,47 +39,47 @@ unsigned long long ulDataPatternTable[] = {
 };
 
 /*******************************************************************************
-*º¯ÊıÃû£ºpass_fail_count(iResult)
-*¹¦    ÄÜ£º ²âÊÔÍ¨¹ıÅĞ¶Ïº¯Êı¡£
-*²Î    Êı£ºintiResult  ²âÊÔ½áÊøºó´«µİ¹ıÀ´µÄ´íÎó´ÎÊı
-*·µ»ØÖµ£ºÎŞ
+*å‡½æ•°åï¼špass_fail_count(iResult)
+*åŠŸ    èƒ½ï¼š æµ‹è¯•é€šè¿‡åˆ¤æ–­å‡½æ•°ã€‚
+*å‚    æ•°ï¼šintiResult  æµ‹è¯•ç»“æŸåä¼ é€’è¿‡æ¥çš„é”™è¯¯æ¬¡æ•°
+*è¿”å›å€¼ï¼šæ— 
 *******************************************************************************/
 void pass_fail_count(int iResult)
 {
 	if(iResult)
-		printf("\n   ´æ´¢Ìå²âÊÔ²»Í¨¹ı! \n");
+		printf("\n   å­˜å‚¨ä½“æµ‹è¯•ä¸é€šè¿‡! \n");
 	else
-		printf("\n   ´æ´¢Ìå²âÊÔÍ¨¹ı! \n");
+		printf("\n   å­˜å‚¨ä½“æµ‹è¯•é€šè¿‡! \n");
 }
 
 /*******************************************************************************
-*º¯ÊıÃû£ºKeyStone_memory_test(unsigned int uiStartAddress, unsigned int uiStopAddress, unsigned int uiStep, char * mem_name)
-*¹¦    ÄÜ£º ´æ´¢Ìå²âÊÔ
-*²Î    Êı£ºuiStartAddress  ´æ´¢ÌåÆğÊ¼µØÖ·
-*      uiStopAddress  ´æ´¢Ìå½áÊøµØÖ·
-*      uiStep         Ìî³äµÄÊı¾İµÄ¼ä¸ô£¬¼ä¸ô   = uiStep*2 ¸ö×Ö£¬ËùÒÔ1±íÊ¾Á¬ĞøÌî³ä£¬Õı³£²âÊÔÑ¡1¼´¿É¡£
-*      mem_name       ²âÊÔ´æ´¢ÇøÓòµÄÃû×Ö
-*·µ»ØÖµ£ºÎŞ
-*Ëµ    Ã÷£º1¡¢º¯ÊıÄÚ²¿ÓĞ´òÓ¡ĞÅÏ¢£¬ÈıÖÖ²âÊÔ¾ùÓĞ¹ı³ÌËµÃ÷¡£
-*      2¡¢²âÊÔÍ¨¹ı´òÓ¡¡°²âÊÔÍ¨¹ı¡±£¬·ñÔò´òÓ¡¡°²âÊÔ²»Í¨¹ı¡±¡£
-*      3¡¢³£¹æÁ¬Ğø²âÊÔ£¬uiStepÉèÖÃÎª1¼´¿É¡£
+*å‡½æ•°åï¼šKeyStone_memory_test(unsigned int uiStartAddress, unsigned int uiStopAddress, unsigned int uiStep, char * mem_name)
+*åŠŸ    èƒ½ï¼š å­˜å‚¨ä½“æµ‹è¯•
+*å‚    æ•°ï¼šuiStartAddress  å­˜å‚¨ä½“èµ·å§‹åœ°å€
+*      uiStopAddress  å­˜å‚¨ä½“ç»“æŸåœ°å€
+*      uiStep         å¡«å……çš„æ•°æ®çš„é—´éš”ï¼Œé—´éš”   = uiStep*2 ä¸ªå­—ï¼Œæ‰€ä»¥1è¡¨ç¤ºè¿ç»­å¡«å……ï¼Œæ­£å¸¸æµ‹è¯•é€‰1å³å¯ã€‚
+*      mem_name       æµ‹è¯•å­˜å‚¨åŒºåŸŸçš„åå­—
+*è¿”å›å€¼ï¼šæ— 
+*è¯´    æ˜ï¼š1ã€å‡½æ•°å†…éƒ¨æœ‰æ‰“å°ä¿¡æ¯ï¼Œä¸‰ç§æµ‹è¯•å‡æœ‰è¿‡ç¨‹è¯´æ˜ã€‚
+*      2ã€æµ‹è¯•é€šè¿‡æ‰“å°â€œæµ‹è¯•é€šè¿‡â€ï¼Œå¦åˆ™æ‰“å°â€œæµ‹è¯•ä¸é€šè¿‡â€ã€‚
+*      3ã€å¸¸è§„è¿ç»­æµ‹è¯•ï¼ŒuiStepè®¾ç½®ä¸º1å³å¯ã€‚
 *******************************************************************************/
 void DSP_memory_test(unsigned int uiStartAddress,
 	unsigned int uiStopAddress, unsigned int uiStep, char * mem_name)
 {
-	printf("\n   ¶Ô   %s ÇøÓò½øĞĞ²âÊÔ   \n", mem_name);
+	printf("\n   å¯¹   %s åŒºåŸŸè¿›è¡Œæµ‹è¯•   \n", mem_name);
 	pass_fail_count(DSP_core_MEM_Test(uiStartAddress, uiStopAddress, uiStep));
 }
 
 /*******************************************************************************
-*º¯ÊıÃû£ºMEM_FillTest(unsigned int uiStartAddress,unsigned int uiCount,unsigned long long ulBitPattern,unsigned int uiStep)
-*¹¦    ÄÜ£º Ìî³äÊı¾İ²âÊÔ
-*²Î    Êı£ºuiStartAddress  ´æ´¢ÌåÆğÊ¼µØÖ·
-*      uiCount        Ìî³äÊı¾İµÄ´ÎÊı
-*      ulBitPattern   Ìî³äµÄÊı¾İ
-*      uiStep         ±íÊ¾²âÊÔµÄ²½³¤
-*·µ»ØÖµ£º uiFailCount    ³ö´íµÄ´ÎÊı
-*×¢    Òâ£º Ìî³ä²âÊÔµÄÔ­ÀíÊÇ ¸øÕûÆ¬¿Õ¼äÌî³ä¹Ì¶¨µÄÊıÖµ¡£
+*å‡½æ•°åï¼šMEM_FillTest(unsigned int uiStartAddress,unsigned int uiCount,unsigned long long ulBitPattern,unsigned int uiStep)
+*åŠŸ    èƒ½ï¼š å¡«å……æ•°æ®æµ‹è¯•
+*å‚    æ•°ï¼šuiStartAddress  å­˜å‚¨ä½“èµ·å§‹åœ°å€
+*      uiCount        å¡«å……æ•°æ®çš„æ¬¡æ•°
+*      ulBitPattern   å¡«å……çš„æ•°æ®
+*      uiStep         è¡¨ç¤ºæµ‹è¯•çš„æ­¥é•¿
+*è¿”å›å€¼ï¼š uiFailCount    å‡ºé”™çš„æ¬¡æ•°
+*æ³¨    æ„ï¼š å¡«å……æµ‹è¯•çš„åŸç†æ˜¯ ç»™æ•´ç‰‡ç©ºé—´å¡«å……å›ºå®šçš„æ•°å€¼ã€‚
 *******************************************************************************/
 unsigned int MEM_FillTest(unsigned int uiStartAddress,
                         unsigned int uiCount,
@@ -90,7 +90,7 @@ unsigned int MEM_FillTest(unsigned int uiStartAddress,
     volatile unsigned long long *ulpAddressPointer;
     volatile unsigned long long ulReadBack;
 
-    /*¶Ô´æ´¢ÌåÌî³äÊı¾İ£¬Ìî³äµÄÊı¾İÎªulBitPattern*/
+    /*å¯¹å­˜å‚¨ä½“å¡«å……æ•°æ®ï¼Œå¡«å……çš„æ•°æ®ä¸ºulBitPattern*/
 	ulpAddressPointer = (unsigned long long *)uiStartAddress;
 	for(i=0; i<uiCount; i++)
 	{
@@ -98,16 +98,16 @@ unsigned int MEM_FillTest(unsigned int uiStartAddress,
         ulpAddressPointer += (uiStep);
     }
 
-	/* Ğ´ÍêÖ®ºó½øĞĞÊı¾İĞ£Ñé */
+	/* å†™å®Œä¹‹åè¿›è¡Œæ•°æ®æ ¡éªŒ */
 	ulpAddressPointer = (unsigned long long *)uiStartAddress;
 	for(i=0; i<uiCount; i++)
 	{
         ulReadBack = *ulpAddressPointer;
         if ( ulReadBack!= ulBitPattern)
         {
-			PRINT("  ´æ´¢Ìå²âÊÔÔÚ 0x%8x Î»ÖÃ³ö´í, Ğ´½øÈ¥µÄÊıÖµÎª 0x%016llx, ¶Á³öÀ´µÄÊıÖµÎª 0x%016llx\n", (unsigned int)ulpAddressPointer, ulBitPattern, ulReadBack);
+			PRINT("  å­˜å‚¨ä½“æµ‹è¯•åœ¨ 0x%8x ä½ç½®å‡ºé”™, å†™è¿›å»çš„æ•°å€¼ä¸º 0x%016llx, è¯»å‡ºæ¥çš„æ•°å€¼ä¸º 0x%016llx\n", (unsigned int)ulpAddressPointer, ulBitPattern, ulReadBack);
             uiFailCount++;
-			if(uiFailCount>=MAX_FILL_FAIL_COUNT)/* ´íÎó´ÎÊı³¬¹ıMAX_FILL_FAIL_COUNT´ÎÖ±½ÓÍË³ö*/
+			if(uiFailCount>=MAX_FILL_FAIL_COUNT)/* é”™è¯¯æ¬¡æ•°è¶…è¿‡MAX_FILL_FAIL_COUNTæ¬¡ç›´æ¥é€€å‡º*/
 				return uiFailCount;
         }
         ulpAddressPointer += (uiStep);
@@ -116,13 +116,13 @@ unsigned int MEM_FillTest(unsigned int uiStartAddress,
 }
 
 /*******************************************************************************
-*º¯ÊıÃû£ºMEM_AddrTest(unsigned int uiStartAddress, unsigned int uiCount, int iStep)
-*¹¦    ÄÜ£º µØÖ·²âÊÔ
-*²Î    Êı£ºuiStartAddress  ´æ´¢ÌåÆğÊ¼µØÖ·
-*      uiCount        Ìî³äµÄ´ÎÊı
-*      uiStep          Ìî³äµÄÊı¾İµÄ¼ä¸ô£¬¼ä¸ô   = uiStep*2 ¸ö×Ö£¬ËùÒÔ1±íÊ¾Á¬ĞøÌî³ä
-*·µ»ØÖµ£º uiFailCount     ³ö´íµÄ´ÎÊı
-*×¢    Òâ£ºµØÖ·²âÊÔµÄÔ­ÀíÊÇ ¸øÃ¿¸ö¹¦ÄÜµ¥ÔªÌî³ä¸Ã¹¦ÄÜµ¥ÔªµÄµØÖ·£¬±ÈÈçÔÚ µØÖ·0Ğ´Êı¾İ0¡¢µØÖ·1Ğ´Êı¾İ1
+*å‡½æ•°åï¼šMEM_AddrTest(unsigned int uiStartAddress, unsigned int uiCount, int iStep)
+*åŠŸ    èƒ½ï¼š åœ°å€æµ‹è¯•
+*å‚    æ•°ï¼šuiStartAddress  å­˜å‚¨ä½“èµ·å§‹åœ°å€
+*      uiCount        å¡«å……çš„æ¬¡æ•°
+*      uiStep          å¡«å……çš„æ•°æ®çš„é—´éš”ï¼Œé—´éš”   = uiStep*2 ä¸ªå­—ï¼Œæ‰€ä»¥1è¡¨ç¤ºè¿ç»­å¡«å……
+*è¿”å›å€¼ï¼š uiFailCount     å‡ºé”™çš„æ¬¡æ•°
+*æ³¨    æ„ï¼šåœ°å€æµ‹è¯•çš„åŸç†æ˜¯ ç»™æ¯ä¸ªåŠŸèƒ½å•å…ƒå¡«å……è¯¥åŠŸèƒ½å•å…ƒçš„åœ°å€ï¼Œæ¯”å¦‚åœ¨ åœ°å€0å†™æ•°æ®0ã€åœ°å€1å†™æ•°æ®1
 *******************************************************************************/
 unsigned int MEM_AddrTest(unsigned int uiStartAddress, 
 						unsigned int uiCount,
@@ -135,7 +135,7 @@ unsigned int MEM_AddrTest(unsigned int uiStartAddress,
 	ulpAddressPointer = (unsigned long long *)uiStartAddress;
 	for(i=0; i<uiCount; i++)
 	{
-		/* ÓÃµØÖ·Öµ½øĞĞÌî³ä   */
+		/* ç”¨åœ°å€å€¼è¿›è¡Œå¡«å……   */
         *ulpAddressPointer = _itoll(((unsigned int)ulpAddressPointer)+4, 
         	(unsigned int)ulpAddressPointer);	  
         ulpAddressPointer += (iStep);
@@ -146,11 +146,11 @@ unsigned int MEM_AddrTest(unsigned int uiStartAddress,
 	{
         ulReadBack = *ulpAddressPointer;
         if ( ulReadBack != _itoll(((unsigned int)ulpAddressPointer)+4, 
-        	(unsigned int)ulpAddressPointer)) /* Êı¾İ¶Ô±È */
+        	(unsigned int)ulpAddressPointer)) /* æ•°æ®å¯¹æ¯” */
         {
-			PRINT("  ÔÚµØÖ· 0x%8x ²âÊÔ³ö´í, Ğ´ÈëµÄÖµÎª  0x%016llx, ¶Á»ØÀ´µÄÖµÎª  0x%016llx\n", (unsigned int)ulpAddressPointer, _itoll(((unsigned int)ulpAddressPointer)+4, (unsigned int)ulpAddressPointer), ulReadBack);
+			PRINT("  åœ¨åœ°å€ 0x%8x æµ‹è¯•å‡ºé”™, å†™å…¥çš„å€¼ä¸º  0x%016llx, è¯»å›æ¥çš„å€¼ä¸º  0x%016llx\n", (unsigned int)ulpAddressPointer, _itoll(((unsigned int)ulpAddressPointer)+4, (unsigned int)ulpAddressPointer), ulReadBack);
             uiFailCount++;
-			if(uiFailCount>=MAX_ADDRESS_FAIL_COUNT) /* ´íÎó´ÎÊı³¬¹ıMAX_ADDRESS_FAIL_COUNT´ÎÖ±½ÓÍË³ö*/
+			if(uiFailCount>=MAX_ADDRESS_FAIL_COUNT) /* é”™è¯¯æ¬¡æ•°è¶…è¿‡MAX_ADDRESS_FAIL_COUNTæ¬¡ç›´æ¥é€€å‡º*/
 				return uiFailCount;
         }
         ulpAddressPointer += (iStep);
@@ -159,13 +159,13 @@ unsigned int MEM_AddrTest(unsigned int uiStartAddress,
 }
 
 /*******************************************************************************
-*º¯ÊıÃû£ºMEM_Bit_Walking(unsigned int uiStartAddress,unsigned int uiCount,unsigned int uiStep)
-*¹¦    ÄÜ£º ×ßbit²âÊÔ
-*²Î    Êı£ºuiStartAddress  ´æ´¢ÌåÆğÊ¼µØÖ·
-*      uiCount        Ìî³äµÄ´ÎÊı
-*      uiStep          Ìî³äµÄÊı¾İµÄ¼ä¸ô£¬¼ä¸ô   = uiStep*2 ¸ö×Ö£¬ËùÒÔ1±íÊ¾Á¬ĞøÌî³ä
-*·µ»ØÖµ£º uiFailCount    ±êÊ¾³ö´íµÄ´ÎÊı
-*Ëµ    Ã÷£º²âÊÔµÄÔ­ÀíÎª   1¡¢ ÔÚÈ«0Êı¾İÖĞµ¥¶ÀÃ¿Ò»Î»¸³1Ìî³ä´æ´¢Ìå£» 2¡¢ ÔÚÈ«1Êı¾İÖĞµ¥¶ÀÃ¿Ò»Î»¸³0Ìî³ä´æ´¢Ìå
+*å‡½æ•°åï¼šMEM_Bit_Walking(unsigned int uiStartAddress,unsigned int uiCount,unsigned int uiStep)
+*åŠŸ    èƒ½ï¼š èµ°bitæµ‹è¯•
+*å‚    æ•°ï¼šuiStartAddress  å­˜å‚¨ä½“èµ·å§‹åœ°å€
+*      uiCount        å¡«å……çš„æ¬¡æ•°
+*      uiStep          å¡«å……çš„æ•°æ®çš„é—´éš”ï¼Œé—´éš”   = uiStep*2 ä¸ªå­—ï¼Œæ‰€ä»¥1è¡¨ç¤ºè¿ç»­å¡«å……
+*è¿”å›å€¼ï¼š uiFailCount    æ ‡ç¤ºå‡ºé”™çš„æ¬¡æ•°
+*è¯´    æ˜ï¼šæµ‹è¯•çš„åŸç†ä¸º   1ã€ åœ¨å…¨0æ•°æ®ä¸­å•ç‹¬æ¯ä¸€ä½èµ‹1å¡«å……å­˜å‚¨ä½“ï¼› 2ã€ åœ¨å…¨1æ•°æ®ä¸­å•ç‹¬æ¯ä¸€ä½èµ‹0å¡«å……å­˜å‚¨ä½“
 *******************************************************************************/
 unsigned int MEM_Bit_Walking(unsigned int uiStartAddress,
 						unsigned int uiCount,
@@ -176,15 +176,15 @@ unsigned int MEM_Bit_Walking(unsigned int uiStartAddress,
     unsigned int uiBitMask=1;
     for (j = 0; j < 32; j++)
     {
-    	PRINT("´ÓµØÖ· 0x%8x ´¦Ìî³äÊı¾İ£º 0x%16llx\n",uiStartAddress, _itoll(uiBitMask, uiBitMask));
+    	PRINT("ä»åœ°å€ 0x%8x å¤„å¡«å……æ•°æ®ï¼š 0x%16llx\n",uiStartAddress, _itoll(uiBitMask, uiBitMask));
     	if(MEM_FillTest(uiStartAddress, uiCount, _itoll(uiBitMask, uiBitMask), uiStep))
     		uiFailCount++;
 
-    	PRINT("´ÓµØÖ· 0x%8x ´¦Ìî³äÊı¾İ£º 0x%16llx\n",uiStartAddress, _itoll(~uiBitMask, ~uiBitMask));
+    	PRINT("ä»åœ°å€ 0x%8x å¤„å¡«å……æ•°æ®ï¼š 0x%16llx\n",uiStartAddress, _itoll(~uiBitMask, ~uiBitMask));
     	if(MEM_FillTest(uiStartAddress, uiCount, _itoll(~uiBitMask, ~uiBitMask), uiStep))
     		uiFailCount++;
 
-    	if(uiFailCount>= MAX_BITWALKING_FAIL_COUNT)/* ´íÎó´ÎÊı³¬¹ıMAX_BITWALKING_FAIL_COUNT´ÎÖ±½ÓÍË³ö*/
+    	if(uiFailCount>= MAX_BITWALKING_FAIL_COUNT)/* é”™è¯¯æ¬¡æ•°è¶…è¿‡MAX_BITWALKING_FAIL_COUNTæ¬¡ç›´æ¥é€€å‡º*/
 			return uiFailCount;
 
         uiBitMask <<= 1;
@@ -193,67 +193,67 @@ unsigned int MEM_Bit_Walking(unsigned int uiStartAddress,
 }
 
 /*******************************************************************************
-*º¯ÊıÃû£ºDSP_core_MEM_Test(unsigned int uiStartAddress, unsigned int uiStopAddress, unsigned int uiStep)
-*¹¦    ÄÜ£º DSPÄÚºË·ÃÎÊ´æ´¢Ìå²âÊÔ
-*²Î    Êı£ºuiStartAddress   ´æ´¢ÌåÆğÊ¼µØÖ·£¬
-*      uiStopAddress   ´æ´¢Ìå½áÊøµØÖ·£¬
-*      uiStep          Ìî³äµÄÊı¾İµÄ¼ä¸ô£¬¼ä¸ô   = uiStep*2 ¸ö×Ö£¬ËùÒÔ1±íÊ¾Á¬ĞøÌî³ä
-*·µ»ØÖµ£ºuiTotalFailCount ³ö´íµÄ×Ü´ÎÊı
-*Ëµ    Ã÷£º¸Ã½Ó¿Úº¯ÊıÖ÷Òª°üº¬Èı¸ö²¿·Ö 1¡¢Êı¾İÌî³ä²âÊÔ  2¡¢µØÖ·²âÊÔ  3¡¢×ßbit²âÊÔ
+*å‡½æ•°åï¼šDSP_core_MEM_Test(unsigned int uiStartAddress, unsigned int uiStopAddress, unsigned int uiStep)
+*åŠŸ    èƒ½ï¼š DSPå†…æ ¸è®¿é—®å­˜å‚¨ä½“æµ‹è¯•
+*å‚    æ•°ï¼šuiStartAddress   å­˜å‚¨ä½“èµ·å§‹åœ°å€ï¼Œ
+*      uiStopAddress   å­˜å‚¨ä½“ç»“æŸåœ°å€ï¼Œ
+*      uiStep          å¡«å……çš„æ•°æ®çš„é—´éš”ï¼Œé—´éš”   = uiStep*2 ä¸ªå­—ï¼Œæ‰€ä»¥1è¡¨ç¤ºè¿ç»­å¡«å……
+*è¿”å›å€¼ï¼šuiTotalFailCount å‡ºé”™çš„æ€»æ¬¡æ•°
+*è¯´    æ˜ï¼šè¯¥æ¥å£å‡½æ•°ä¸»è¦åŒ…å«ä¸‰ä¸ªéƒ¨åˆ† 1ã€æ•°æ®å¡«å……æµ‹è¯•  2ã€åœ°å€æµ‹è¯•  3ã€èµ°bitæµ‹è¯•
 *******************************************************************************/
 int DSP_core_MEM_Test(unsigned int uiStartAddress, unsigned int uiStopAddress, unsigned int uiStep)
 {
     unsigned int uiCount, uiFailCount=0, uiTotalFailCount=0;
     int j;
 
-    /*uiCountÎªÊı¾İÌî³äµÄ´ÎÊı*/
+    /*uiCountä¸ºæ•°æ®å¡«å……çš„æ¬¡æ•°*/
     uiCount = ((uiStopAddress - uiStartAddress)/8)/uiStep;
 
-#ifdef  BIT_PATTERN_FILLING_TEST   /* Êı¾İÌî³ä²âÊÔ  */
-    PRINT(" 1¡¢Êı¾İÌî³ä²âÊÔ¿ªÊ¼£¡  \n" );
-    /* ½«Êı¾İ±íÖĞµÄÊı¾İÌî³äµ½²âÊÔ¿Õ¼ä  */
+#ifdef  BIT_PATTERN_FILLING_TEST   /* æ•°æ®å¡«å……æµ‹è¯•  */
+    PRINT(" 1ã€æ•°æ®å¡«å……æµ‹è¯•å¼€å§‹ï¼  \n" );
+    /* å°†æ•°æ®è¡¨ä¸­çš„æ•°æ®å¡«å……åˆ°æµ‹è¯•ç©ºé—´  */
     for (j = 0; j < sizeof(ulDataPatternTable)/8; j++)
     {
         uiFailCount = MEM_FillTest(uiStartAddress, uiCount, ulDataPatternTable[j], uiStep);
 	    if (uiFailCount)
 	    {
-	    	PRINT(" ³öÏÖÁË%d ´Î´íÎó£¬ÔÚÌî³äÊı¾İ 0x%016llxÊ±¡£  \n",uiFailCount, ulDataPatternTable[j]);
+	    	PRINT(" å‡ºç°äº†%d æ¬¡é”™è¯¯ï¼Œåœ¨å¡«å……æ•°æ® 0x%016llxæ—¶ã€‚  \n",uiFailCount, ulDataPatternTable[j]);
 	    	uiTotalFailCount+=uiFailCount;
 	    }
 		else
-		    PRINT(" ´ÓµØÖ·  0x%8x µ½  µØÖ·0x%8x Ìî³äÊı¾İ  0x%16llx Í¨¹ı£¡ \n",uiStartAddress,uiStopAddress, ulDataPatternTable[j]);
+		    PRINT(" ä»åœ°å€  0x%8x åˆ°  åœ°å€0x%8x å¡«å……æ•°æ®  0x%16llx é€šè¿‡ï¼ \n",uiStartAddress,uiStopAddress, ulDataPatternTable[j]);
     }
-    PRINT(" 1¡¢Êı¾İÌî³ä²âÊÔ½áÊø£¡  \n" );
+    PRINT(" 1ã€æ•°æ®å¡«å……æµ‹è¯•ç»“æŸï¼  \n" );
 #endif
 
 #ifdef  ADDRESS_TEST
-    PRINT(" \n 2¡¢ µØÖ·²âÊÔ¿ªÊ¼£¡  \n" );
-    /* ´ÓµÍµ½¸ß½øĞĞµØÖ·²âÊÔ  */
+    PRINT(" \n 2ã€ åœ°å€æµ‹è¯•å¼€å§‹ï¼  \n" );
+    /* ä»ä½åˆ°é«˜è¿›è¡Œåœ°å€æµ‹è¯•  */
     uiFailCount = MEM_AddrTest(uiStartAddress, uiCount, uiStep);
     if (uiFailCount)
     {
-    	PRINT("  ÔÚµØÖ·²âÊÔÊ±³öÏÖ %d ´Î´íÎó£¡ \n",uiFailCount);
+    	PRINT("  åœ¨åœ°å€æµ‹è¯•æ—¶å‡ºç° %d æ¬¡é”™è¯¯ï¼ \n",uiFailCount);
         uiTotalFailCount+=uiFailCount;
     }
 	else
-	   	PRINT("  ´ÓµØÖ· 0x%8x µ½  µØÖ· 0x%8x µØÖ·²âÊÔ³É¹¦ £¡\n",uiStartAddress,uiStopAddress);
-    PRINT(" 2¡¢µØÖ·²âÊÔ½áÊø£¡  \n" );
+	   	PRINT("  ä»åœ°å€ 0x%8x åˆ°  åœ°å€ 0x%8x åœ°å€æµ‹è¯•æˆåŠŸ ï¼\n",uiStartAddress,uiStopAddress);
+    PRINT(" 2ã€åœ°å€æµ‹è¯•ç»“æŸï¼  \n" );
 #endif
 
 #ifdef  BIT_WALKING_TEST
-    PRINT("\n 3¡¢ ×ßbit²âÊÔ¿ªÊ¼£¡  \n" );
-    /* ×ßbit²âÊÔ  */
+    PRINT("\n 3ã€ èµ°bitæµ‹è¯•å¼€å§‹ï¼  \n" );
+    /* èµ°bitæµ‹è¯•  */
     if(uiCount>MAX_BITWALKING_RANGE)
-			uiCount= MAX_BITWALKING_RANGE;     /* ±ÜÃâ²âÊÔÊ±¼ä¹ı³¤£¬´Ë´¦¶Ô²âÊÔ¹æÄ£½øĞĞÁËÏŞÖÆ£¬ÓÃ»§¿É×Ô¶¨ÒåĞŞ¸Ä */
+			uiCount= MAX_BITWALKING_RANGE;     /* é¿å…æµ‹è¯•æ—¶é—´è¿‡é•¿ï¼Œæ­¤å¤„å¯¹æµ‹è¯•è§„æ¨¡è¿›è¡Œäº†é™åˆ¶ï¼Œç”¨æˆ·å¯è‡ªå®šä¹‰ä¿®æ”¹ */
     uiFailCount = MEM_Bit_Walking(uiStartAddress,uiCount, uiStep);
     if (uiFailCount)
     {
-	   	PRINT(" ²âÊÔ¹²ÓĞ %d ´Î³öÏÖ´íÎó   \n",uiFailCount);
+	   	PRINT(" æµ‹è¯•å…±æœ‰ %d æ¬¡å‡ºç°é”™è¯¯   \n",uiFailCount);
         uiTotalFailCount+=uiFailCount;
     }    
 	else
-	  	PRINT("    ´ÓµØÖ· 0x%8x µ½  µØÖ· 0x%8x µØÖ·²âÊÔ³É¹¦ £¡ \n",uiStartAddress,uiStopAddress);
-    PRINT(" 3¡¢ ×ßbit²âÊÔ½áÊø£¡  \n" );
+	  	PRINT("    ä»åœ°å€ 0x%8x åˆ°  åœ°å€ 0x%8x åœ°å€æµ‹è¯•æˆåŠŸ ï¼ \n",uiStartAddress,uiStopAddress);
+    PRINT(" 3ã€ èµ°bitæµ‹è¯•ç»“æŸï¼  \n" );
 #endif
   	return uiTotalFailCount;
 }

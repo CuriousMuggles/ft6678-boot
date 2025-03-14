@@ -323,7 +323,7 @@ static void DDRpll(DDR_CLK_t ddr_freq) {
 	temp = 0x2 & DDRPLLCMD;
 	while (!temp) {
 		temp = 0x2 & DDRPLLCMD;
-		bspPrintf("DDRPLLCMD is 0x%08x\r\n",DDRPLLCMD,1,2,3,4,5);
+		printfk("DDRPLLCMD is 0x%08x\r\n",DDRPLLCMD);
 	}
 	//将DDRPLLC_En中的DDRPLLC_BYPASS写为0，将DDRPLL控制器时钟切换到PLL模式bypass，0为125M或333M时钟；*******
 	DDRPLLC_En = 0;	//???

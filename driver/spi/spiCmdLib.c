@@ -14,11 +14,11 @@ static void spi_delay(UINT32 ix)
     }
 }
 /*****************************************************************/
-/*������UINT32 swap32(UINT32 val)
- *���ܣ�32λ��С��ת��
- *���룺val����ת������
- *�������
- *����ֵ��ת�������
+/*函数：UINT32 swap32(UINT32 val)
+ *功能：32位大小端转换
+ *输入：val：待转换的数
+ *输出：无
+ *返回值：转换后的数
  */
 UINT32 swap32(UINT32 val)
 {
@@ -28,12 +28,12 @@ UINT32 swap32(UINT32 val)
 			((val<<24)&0xff000000);
 }
 /*****************************************************************/
-/*������INT32 bspSpiRegRead(UINT32 regaddr,UINT32 *val)
- *���ܣ�spi��FMQL�Ĵ���
- *���룺regaddr���Ĵ�����ַ
- *�����val����ȡ���ݴ�ŵ�ַ
- *����ֵ��RET_SUCCESS-�ɹ�
- *		  RET_ERROR-ʧ��
+/*函数：INT32 bspSpiRegRead(UINT32 regaddr,UINT32 *val)
+ *功能：spi读FMQL寄存器
+ *输入：regaddr：寄存器地址
+ *输出：val：读取数据存放地址
+ *返回值：RET_SUCCESS-成功
+ *		  RET_ERROR-失败
  */
 INT32 bspSpiRegRead(UINT32 regaddr,UINT32 *val)
 {
@@ -57,12 +57,12 @@ INT32 bspSpiRegRead(UINT32 regaddr,UINT32 *val)
 	}
 }
 /*****************************************************************/
-/*������INT32 bspSpiRegWrite(UINT32 regaddr,UINT32 val)
- *���ܣ�spiдFMQL�Ĵ���
- *���룺regaddr���Ĵ�����ַ
- *�����val����д�������
- *����ֵ��RET_SUCCESS-�ɹ�
- *		  RET_ERROR-ʧ��
+/*函数：INT32 bspSpiRegWrite(UINT32 regaddr,UINT32 val)
+ *功能：spi写FMQL寄存器
+ *输入：regaddr：寄存器地址
+ *输出：val：待写入的数据
+ *返回值：RET_SUCCESS-成功
+ *		  RET_ERROR-失败
  */
 INT32 bspSpiRegWrite(UINT32 regaddr,UINT32 val)
 {
@@ -82,11 +82,11 @@ INT32 bspSpiRegWrite(UINT32 regaddr,UINT32 val)
 	return spiTransfer(0,0,datawrite,10,(UINT8 *)&readdata,0);
 }
 /*****************************************************************/
-/*������void softInfoToFpga(void)
- *���ܣ��������汾�ϱ���FMQL
- *���룺��
- *�������
- *����ֵ����
+/*函数：void softInfoToFpga(void)
+ *功能：把软件版本上报给FMQL
+ *输入：无
+ *输出：无
+ *返回值：无
  */
 extern INT32 bspBspVersionGet(VERSION * pVersion);
 void softInfoToFpga(void)
@@ -110,12 +110,12 @@ void softInfoToFpga(void)
 	bspSpiRegWrite(SPI_BRAM_REG(BOOT_VER3),temp);
 }
 /*****************************************************************/
-/*������INT32 dspFlashAddrSwitch(UINT32 flashBlockNo)
- *���ܣ� �л�DSP FLASH�ĵ�ַ
- *���룺flashBlockNo:Ҫ�л���flash��ַ,0-31
- *����ֵ��RET_RARAM1_ERROR=��������
- * 	   	RET_ERROR=�л�ʧ��
- * 	   	RET_SUCCESS=�л��ɹ�
+/*函数：INT32 dspFlashAddrSwitch(UINT32 flashBlockNo)
+ *功能： 切换DSP FLASH的地址
+ *输入：flashBlockNo:要切换的flash地址,0-31
+ *返回值：RET_RARAM1_ERROR=参数错误
+ * 	   	RET_ERROR=切换失败
+ * 	   	RET_SUCCESS=切换成功
  */
 INT32 dspFlashAddrSwitch(UINT32 flashBlockNo)
 {
@@ -131,13 +131,13 @@ INT32 dspFlashAddrSwitch(UINT32 flashBlockNo)
 	}
 }
 /*****************************************************************/
-/*������INT32 getSlot(UINT8 *pmark_num,UINT8 *pdsp_num)
- *���ܣ���ȡdspоƬ��ʶ�ź�ģ���λ
- *���룺pslot_num�����ģ���λ�ŵĵ�ַ
- *	  pdsp_num�����оƬ��ʶ�ŵĵ�ַ
- *����ֵ��RET_RARAM1_ERROR=��������
- * 	   	RET_ERROR=����ʧ��
- * 	   	RET_SUCCESS=�����ɹ�
+/*函数：INT32 getSlot(UINT8 *pmark_num,UINT8 *pdsp_num)
+ *功能：获取dsp芯片标识号和模块槽位
+ *输入：pslot_num：存放模块槽位号的地址
+ *	  pdsp_num：存放芯片标识号的地址
+ *返回值：RET_RARAM1_ERROR=参数错误
+ * 	   	RET_ERROR=操作失败
+ * 	   	RET_SUCCESS=操作成功
  */
 INT32 getSlot(UINT8 *pmark_num,UINT8 *pdsp_num)
 {
@@ -156,16 +156,16 @@ INT32 getSlot(UINT8 *pmark_num,UINT8 *pdsp_num)
 	}
 }
 /*****************************************************************/
-/*������INT32 getBootMode(UINT32 *resettype)
- *���ܣ� ��ȡ��λԭ��
- *���룺flashBlockNo:Ҫ�л���flash��ַ,0-31
- *�����resettype:1-�ϵ縴λ
-		2-����ȫ�ָ�λ
-		3-�������ڵ㸴λ
-		4-���Ź����ڵ㸴λ
- *����ֵ��RET_RARAM1_ERROR=��������
- * 	   	RET_ERROR=����ʧ��
- * 	   	RET_SUCCESS=�����ɹ�
+/*函数：INT32 getBootMode(UINT32 *resettype)
+ *功能： 获取复位原因
+ *输入：flashBlockNo:要切换的flash地址,0-31
+ *输出：resettype:1-上电复位
+		2-软件全局复位
+		3-软件单节点复位
+		4-看门狗单节点复位
+ *返回值：RET_RARAM1_ERROR=参数错误
+ * 	   	RET_ERROR=操作失败
+ * 	   	RET_SUCCESS=操作成功
  */
 INT32 getBootMode(UINT32 *resettype)
 {
@@ -182,12 +182,12 @@ INT32 getBootMode(UINT32 *resettype)
 	}
 }
 /*****************************************************************/
-/*������INT32 getSlot(UINT8 *pmark_num,UINT8 *pdsp_num)
- *���ܣ���ȡdspоƬ��ʶ�ź�ģ���λ
- *���룺pslot_num�����ģ���λ�ŵĵ�ַ
- *	  pdsp_num�����оƬ��ʶ�ŵĵ�ַ
- *����ֵ��RET_ERROR=�Լ�ʧ��
- * 	   	 RET_SUCCESS=�Լ�ɹ�
+/*函数：INT32 getSlot(UINT8 *pmark_num,UINT8 *pdsp_num)
+ *功能：获取dsp芯片标识号和模块槽位
+ *输入：pslot_num：存放模块槽位号的地址
+ *	  pdsp_num：存放芯片标识号的地址
+ *返回值：RET_ERROR=自检失败
+ * 	   	 RET_SUCCESS=自检成功
  */
 INT32 bspSpiBit(void)
 {

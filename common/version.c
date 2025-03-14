@@ -2,13 +2,13 @@
 #include "bspInterface.h"
 
 /***************************************************************************
-º¯ÊıÃû³Æ£ºINT32 bspBspVersionGet(VERSION * pVersion)
-º¯Êı¹¦ÄÜ£ºBSP°æ±¾Ê±¼äĞÅÏ¢»ñÈ¡
-ÊäÈë±äÁ¿£ºÎŞ
-Êä³ö±äÁ¿£ºpVersion£º¶ÁÈ¡µ½µÄ°æ±¾ĞÅÏ¢
-·µ»ØÖµ£ºRET_SUCCESS-³É¹¦
-        RET_ERROR-Ê§°Ü
-Ô¼ÊøÌõ¼ş£ºÎŞ
+å‡½æ•°åç§°ï¼šINT32 bspBspVersionGet(VERSION * pVersion)
+å‡½æ•°åŠŸèƒ½ï¼šBSPç‰ˆæœ¬æ—¶é—´ä¿¡æ¯è·å–
+è¾“å…¥å˜é‡ï¼šæ— 
+è¾“å‡ºå˜é‡ï¼špVersionï¼šè¯»å–åˆ°çš„ç‰ˆæœ¬ä¿¡æ¯
+è¿”å›å€¼ï¼šRET_SUCCESS-æˆåŠŸ
+        RET_ERROR-å¤±è´¥
+çº¦æŸæ¡ä»¶ï¼šæ— 
 *****************************************************************************/
 INT32 bspBspVersionGet(VERSION * pVersion)
 {
@@ -78,22 +78,22 @@ INT32 bspBspVersionGet(VERSION * pVersion)
 	return RET_SUCCESS;
 }
 /***************************************************************************
-º¯ÊıÃû³Æ£ºvoid bspVersionInfoShow(void)
-º¯Êı¹¦ÄÜ£º´òÓ¡BSPÈí¼ş°æ±¾ĞÅÏ¢
-ÊäÈë±äÁ¿£ºÎŞ
-Êä³ö±äÁ¿£ºÎŞ
-·µ»ØÖµ£ºÎŞ
-Ô¼ÊøÌõ¼ş£ºÎŞ
+å‡½æ•°åç§°ï¼švoid bspVersionInfoShow(void)
+å‡½æ•°åŠŸèƒ½ï¼šæ‰“å°BSPè½¯ä»¶ç‰ˆæœ¬ä¿¡æ¯
+è¾“å…¥å˜é‡ï¼šæ— 
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›å€¼ï¼šæ— 
+çº¦æŸæ¡ä»¶ï¼šæ— 
 *****************************************************************************/
 void bspVersionInfoShow(void)
 {
 	VERSION  version={0};
 	INT32 i;
 
-	bspPrintf("\r\n======================SOFT VERSION INFO=====================\r\n",0,1,2,3,4,5);
+	printfk("\r\n======================SOFT VERSION INFO=====================\r\n");
 	bspBspVersionGet(&version);
-	bspPrintf("BOOT  Version: [%d.%02d.%02d] ",version.version1,version.version2,version.version3,3,4,5);
-	bspPrintf("Build Time: %04d-%02d-%02d  ",version.year,version.month,version.day,3,4,5);
-	bspPrintf("%02d:%02d:%02d\r\n",version.hour,version.minute,version.second,3,4,5);
-	bspPrintf("=============================================================\r\n",0,1,2,3,4,5);
+	printfk("BOOT  Version: [%d.%02d.%02d] ",version.version1,version.version2,version.version3);
+	printfk("Build Time: %04d-%02d-%02d  %02d:%02d:%02d\r\n",version.year,version.month,version.day
+	,version.hour,version.minute,version.second);
+	printfk("=============================================================\r\n");
 }

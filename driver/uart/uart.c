@@ -1,11 +1,12 @@
 
 /*******************************************************************************
-*ÎÄ¼şÃû£ºUART.c
-*×÷    ÓÃ£º ÓÃÓÚÊµÏÖ´®¿Ú¹¦ÄÜµÄ½Ó¿Úº¯Êı
-*°æ    ±¾£ºVersion 1.0  ´´½¨ÓÚ2018.05.08
+*æ–‡ä»¶åï¼šUART.c
+*ä½œ    ç”¨ï¼š ç”¨äºå®ç°ä¸²å£åŠŸèƒ½çš„æ¥å£å‡½æ•°
+*ç‰ˆ    æœ¬ï¼šVersion 1.0  åˆ›å»ºäº2018.05.08
 *******************************************************************************/
 #include <string.h>
 #include "UART.h"
+#include "bspInterface.h"
 
 char gUartBuffer[UART_MAX_BUFLEN];
 static void uart_delay(UINT32 loop)
@@ -15,33 +16,28 @@ static void uart_delay(UINT32 loop)
 	}
 }
 /***************************************************************************
-º¯ÊıÃû³Æ£ºINT32 bspUartSend(UINT32 dev,UINT32 channel,UINT8 *pSendData,UINT32 sendLen,UINT32 wait)
-º¯Êı¹¦ÄÜ£ºÊ¹ÓÃÖ¸¶¨UARTÍ¨µÀ·¢ËÍÖ¸¶¨³¤¶ÈÊı¾İ
-ÊäÈë±äÁ¿£ºUINT32 dev£ºUART¿ØÖÆÆ÷ºÅ(0)
-          UINT32 channel£ºUARTÍ¨µÀºÅ
-          UINT8 *pSendData£º·¢ËÍÊı¾İÖ¸Õë
-          UINT32 sendLen£º·¢ËÍÊı¾İ³¤¶È
-          UINT32 wait£ºÊÇ·ñµÈ´ı·¢ËÍÈ«²¿Íê³É±êÖ¾£¬0-²»µÈ´ı£¬1-µÈ´ı
-Êä³ö±äÁ¿£ºÎŞ
-·µ»ØÖµ£º·Ç¸ºÖµ-ÒÑ³É¹¦·¢ËÍµÄÊı¾İ³¤¶È£¬ÈôwaitÎª1£¬·µ»ØÖµ·Ç¸ºµ«ÓësendLen²»µÈ£¬ÔòÎªµÈ´ı³¬Ê±£¬·µ»Ø³¬Ê±Ç°³É¹¦·¢ËÍµÄÊı¾İ³¤¶È
-        RET_RARAM1_ERROR-·¢ËÍÊı¾İÖ¸ÕëÎª¿Õ
-        RET_RARAM2_ERROR-µÈ´ı±êÖ¾²»ÔÚÓĞĞ§·¶Î§
-        RET_ERROR-²Ù×÷Ê§°Ü
-Ô¼ÊøÌõ¼ş£º±ØĞëÔÚbspUartInit³õÊ¼»¯ºóµ÷ÓÃ
+å‡½æ•°åç§°ï¼šINT32 bspUartSend(UINT8 *pSendData,UINT32 sendLen,UINT32 wait)
+å‡½æ•°åŠŸèƒ½ï¼šä½¿ç”¨æŒ‡å®šUARTé€šé“å‘é€æŒ‡å®šé•¿åº¦æ•°æ®
+è¾“å…¥å˜é‡ï¼š UINT8 *pSendDataï¼šå‘é€æ•°æ®æŒ‡é’ˆ
+          UINT32 sendLenï¼šå‘é€æ•°æ®é•¿åº¦
+          UINT32 waitï¼šæ˜¯å¦ç­‰å¾…å‘é€å…¨éƒ¨å®Œæˆæ ‡å¿—ï¼Œ0-ä¸ç­‰å¾…ï¼Œ1-ç­‰å¾…
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›å€¼ï¼šéè´Ÿå€¼-å·²æˆåŠŸå‘é€çš„æ•°æ®é•¿åº¦ï¼Œè‹¥waitä¸º1ï¼Œè¿”å›å€¼éè´Ÿä½†ä¸sendLenä¸ç­‰ï¼Œåˆ™ä¸ºç­‰å¾…è¶…æ—¶ï¼Œè¿”å›è¶…æ—¶å‰æˆåŠŸå‘é€çš„æ•°æ®é•¿åº¦
+        RET_RARAM1_ERROR-å‘é€æ•°æ®æŒ‡é’ˆä¸ºç©º
+        RET_RARAM2_ERROR-ç­‰å¾…æ ‡å¿—ä¸åœ¨æœ‰æ•ˆèŒƒå›´
+        RET_ERROR-æ“ä½œå¤±è´¥
+çº¦æŸæ¡ä»¶ï¼šå¿…é¡»åœ¨bspUartInitåˆå§‹åŒ–åè°ƒç”¨
 *****************************************************************************/
-INT32 bspUartSend(INT8 *pSendData,UINT32 sendLen,UINT32 wait)
+INT32 bspUartSend(const INT8 *pSendData,UINT32 sendLen,UINT32 wait)
 {
 	INT32 i;
 	INT32 timeout;
-	if(!pSendData){
-		return RET_RARAM1_ERROR;
-	}
-	if(wait>1){
-		return RET_RARAM2_ERROR;
-	}
+
+	PARAMETER_ASSERT(pSendData,return RET_RARAM1_ERROR);
+	PARAMETER_ASSERT(wait<2,return RET_RARAM2_ERROR);
 
 	for(i=0;i<sendLen;i++){
-		/* ²éÑ¯·¢ËÍFIFOÊÇ·ñ·ÇÂú */
+		/* æŸ¥è¯¢å‘é€FIFOæ˜¯å¦éæ»¡ */
 		timeout = 5000;
 		while((StatusReg & STATUS_TF) == STATUS_TF){
 			if((wait == 1) && (timeout-- > 0)){
@@ -56,54 +52,65 @@ INT32 bspUartSend(INT8 *pSendData,UINT32 sendLen,UINT32 wait)
 	}
 	return i;
 }
-/******************************************************************************
-*º¯ÊıÃû£ºUART_Receive(char *DestData_Addr)
-*¹¦    ÄÜ£º ´®¿Ú½ÓÊÕÊı¾İ
-*²Î    Êı£ºDestData_Addr±íÊ¾ĞèÒª½ÓÊÕµÄÊı¾İ´æ·ÅµÄµØÖ·¡£
-*******************************************************************************/
-void  UART_Receive(char *DestData_Addr)
+/***************************************************************************
+å‡½æ•°åç§°ï¼šINT32 bspUartRecv(UINT8 *pRecvData,UINT32 recvLen,UINT32 wait)
+å‡½æ•°åŠŸèƒ½ï¼šä½¿ç”¨æŒ‡å®šUARTé€šé“æ¥æ”¶æŒ‡å®šé•¿åº¦æ•°æ®
+è¾“å…¥å˜é‡ï¼š UINT8 *pRecvDataï¼šæ¥æ”¶æ•°æ®æŒ‡é’ˆ
+          UINT32 recvLenï¼šæ¥æ”¶æ•°æ®é•¿åº¦
+          UINT32 waitï¼šæ˜¯å¦ç­‰å¾…æ¥æ”¶å…¨éƒ¨å®Œæˆæ ‡å¿—ï¼Œ0-ä¸ç­‰å¾…ï¼Œ1-ç­‰å¾…
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›å€¼ï¼šéè´Ÿå€¼-å·²æˆåŠŸæ¥æ”¶çš„æ•°æ®é•¿åº¦ï¼Œè‹¥waitä¸º1ï¼Œè¿”å›å€¼éè´Ÿä½†ä¸sendLenä¸ç­‰ï¼Œåˆ™ä¸ºç­‰å¾…è¶…æ—¶ï¼Œè¿”å›è¶…æ—¶å‰æˆåŠŸå‘é€çš„æ•°æ®é•¿åº¦
+        RET_RARAM1_ERROR-æ¥æ”¶æ•°æ®æŒ‡é’ˆä¸ºç©º
+        RET_RARAM2_ERROR-ç­‰å¾…æ ‡å¿—ä¸åœ¨æœ‰æ•ˆèŒƒå›´
+        RET_ERROR-æ“ä½œå¤±è´¥
+çº¦æŸæ¡ä»¶ï¼šå¿…é¡»åœ¨bspUartInitåˆå§‹åŒ–åè°ƒç”¨
+*****************************************************************************/
+INT32 bspUartRecv(UINT8 *pRecvData,UINT32 recvLen,UINT32 wait)
 {
-	char *p;
-	int i=0;
-	p = DestData_Addr;
-	while(1)                                          //Ò»Ö±´¦ÓÚ½ÓÊÕ×´Ì¬£¬ÉèÖÃ´®¿ÚÖúÊÖÎª·¢ËÍÊ±£¬
-	{												  //Òª×¢ÒâÉèÖÃ·¢ËÍ¼ä¸ôÊ±¼ä£¬Èç>=2ºÁÃë
-		while((StatusReg&0xfc000000)<0x04000000){};  //²éÑ¯×´Ì¬¼Ä´æÆ÷ÊÇ·ñÓĞÓĞĞ§Êı¾İ
-		*p = DataReg;
-		p = p+1;
-		i = i+1;
-		if(i == 1296)
-			break;
+	INT32 i;
+
+	PARAMETER_ASSERT(pRecvData,return RET_RARAM1_ERROR);
+	PARAMETER_ASSERT(wait<2,return RET_RARAM2_ERROR);
+
+	for(i=0;i<recvLen;i++){
+		while((StatusReg >> 6 & 0x3f) == 0){
+			/* æ¥æ”¶FIFOä¸ºç©º */
+			if(wait == 0){
+				return i;
+			}
+			else{
+				uart_delay(1000);
+			}
+		}
+		pRecvData[i] = DataReg;
 	}
+	return i;
 }
 /*******************************************************************************
-*º¯ÊıÃû£ºUART_Print(Uint32 BaudRate, const char *strFmt)
-*¹¦    ÄÜ£º ´®¿Ú´òÓ¡×Ö·û´®
-*²Î    Êı£ºBaudRateÎª²¨ÌØÂÊ£¬*strFmt´ú±íÒª´«ÊäµÄ×Ö·û´®¡£
+*å‡½æ•°åï¼švoid bspUartPrintString(const char *strFmt
+*åŠŸ    èƒ½ï¼š ä¸²å£æ‰“å°å­—ç¬¦ä¸²
+*å‚    æ•°ï¼šæ— 
 *******************************************************************************/
-void UART_Print(char *strFmt)
+void bspUartPrintString(const char *strFmt)
 {
 	 bspUartSend(strFmt,strlen(strFmt),1);
 }
-
-/*******************************************************************************
-*º¯ÊıÃû£ºUART_Config()
-*¹¦    ÄÜ£º ¿ªUARTÊ±ÖÓº¯Êı
-*²Î    Êı£ºÎŞ
-*******************************************************************************/
-void UART_Config(unsigned int BaudRate)
+/***************************************************************************
+å‡½æ•°åç§°ï¼šINT32 bspUartInit(UINT32 baudRate)
+å‡½æ•°åŠŸèƒ½ï¼šå¤ä½å¹¶åˆå§‹åŒ–æŒ‡å®šé€šé“ï¼Œé…ç½®æ³¢ç‰¹ç‡
+è¾“å…¥å˜é‡ï¼š UINT32 baudRate:UARTæ³¢ç‰¹ç‡ï¼ˆbpsï¼‰
+è¾“å‡ºå˜é‡ï¼šæ— 
+è¿”å›å€¼ï¼šæ— 
+çº¦æŸæ¡ä»¶ï¼šæ— 
+*****************************************************************************/
+void bspUartInit(unsigned int BaudRate)
 {
-	unsigned int temp11,temp22;
+	UINT32 temp11,temp22;
 
 	PSC_Open_Clk("UART",0);
 	temp11 = BaudRate*8*4;
 	temp22= MAIN_PLL/temp11;
 	ScalerReg=(temp22*10- 5 )/10;
-	ControlReg=(1<<0)|(1<<1)|(1<<2)|(1<<3);	// ½ÓÊÕºÍ·¢ËÍÊ¹ÄÜ ²¢ÇÒ´ò¿ª½ÓÊÕºÍ·¢ËÍÖĞ¶Ï,£¨×¢Òâ£ºÈç¹û²»´ò¿ª½ÓÊÕÖĞ¶Ï£¬Ôò½ÓÊÕÎŞ·¨Íê³É¡££©
+	ControlReg=(1<<0)|(1<<1)|(1<<2)|(1<<3);	// æ¥æ”¶å’Œå‘é€ä½¿èƒ½ å¹¶ä¸”æ‰“å¼€æ¥æ”¶å’Œå‘é€ä¸­æ–­,ï¼ˆæ³¨æ„ï¼šå¦‚æœä¸æ‰“å¼€æ¥æ”¶ä¸­æ–­ï¼Œåˆ™æ¥æ”¶æ— æ³•å®Œæˆã€‚ï¼‰
 }
 
-void bspPrintf(const char *strFmt,int data0,int data1,int data2,int data3,int data4,int data5)
-{
-    sprintf(gUartBuffer,strFmt,data0,data1,data2,data3,data4,data5);
-	UART_Print(gUartBuffer);
-}
