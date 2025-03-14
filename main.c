@@ -60,6 +60,8 @@ void EMIF_init(void)
 	A2CR=0x3FFFFFFD;       //CE1配置为16位nor flash
 	A3CR=0x3FFFFFFD;       //CE2配置为16位nor flash
 	A4CR=0x3FFFFFFD;       //CE3配置为8位nor flash
+
+	
 }
 
 static void MainPLL(unsigned int PLLM, unsigned int PLLD,  unsigned int POSTDIV2,unsigned int POSTDIV1)
